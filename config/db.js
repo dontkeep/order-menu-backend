@@ -111,7 +111,10 @@ function createTables() {
   `;
 
   db.query(createRoleTable, (err) => {
-    if (err) throw err;
+    if (err) {
+      console.error('Error creating Role table:', err);
+      return;
+    }
     console.log('Role table created or already exists');
     // Insert default roles
     const insertRoles = `
@@ -119,43 +122,67 @@ function createTables() {
       ON DUPLICATE KEY UPDATE name=name;
     `;
     db.query(insertRoles, (err) => {
-      if (err) throw err;
+      if (err) {
+        console.error('Error inserting default roles:', err);
+        return;
+      }
       console.log('Default roles inserted or already exist');
     });
   });
 
   db.query(createUserTable, (err) => {
-    if (err) throw err;
+    if (err) {
+      console.error('Error creating User table:', err);
+      return;
+    }
     console.log('User table created or already exists');
   });
 
   db.query(createCategoryTable, (err) => {
-    if (err) throw err;
+    if (err) {
+      console.error('Error creating Category table:', err);
+      return;
+    }
     console.log('Category table created or already exists');
   });
 
   db.query(createMenuTable, (err) => {
-    if (err) throw err;
+    if (err) {
+      console.error('Error creating Menu table:', err);
+      return;
+    }
     console.log('Menu table created or already exists');
   });
 
   db.query(createTransactionTable, (err) => {
-    if (err) throw err;
+    if (err) {
+      console.error('Error creating Transaction table:', err);
+      return;
+    }
     console.log('Transaction table created or already exists');
   });
 
   db.query(createTransactionDetailsTable, (err) => {
-    if (err) throw err;
+    if (err) {
+      console.error('Error creating Transaction Details table:', err);
+      return;
+    }
     console.log('Transaction Details table created or already exists');
   });
 
   db.query(createCartTable, (err) => {
-    if (err) throw err;
+    if (err) {
+      console.error('Error creating Cart table:', err);
+      return;
+    }
     console.log('Cart table created or already exists');
   });
 
   db.query(createSessionTable, (err) => {
-    if (err) throw err;
+    if (err) {
+      console.error('Error creating Session table:', err);
+      return;
+    }
     console.log('Session table created or already exists');
   });
 }
