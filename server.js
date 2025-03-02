@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const db = require('./config/db');
 const authRoutes = require('./routes/auth');
+const menuRoutes = require('./routes/menu');
 const app = express();
 const port = 3000;
 
@@ -11,6 +12,7 @@ app.use(express.json());
 
 // Routes
 app.use('/auth', authRoutes);
+app.use('/api', menuRoutes);
 
 app.get('/', (req, res) => {
   res.send('Hello World!');
