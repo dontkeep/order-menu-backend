@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const { tokenizer } = require('./controllers/payment_tokenizer');
+const authRoutes = require('./routes/auth');
 
 dotenv.config();
 
@@ -13,11 +14,7 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
-
-app.get('/', (req, res) => {
-  res.send('Hello World!');
-});
-
+app.use('/auth', authRoutes);
 app.post('/payment', tokenizer);
 
 // Error handling middleware
