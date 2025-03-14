@@ -49,6 +49,24 @@ model Menu {
   details     Transaksi_Detail[]
 }
 
+model Cart {
+  id_user Int
+  id_menu Int
+  quantity Int
+  created_at DateTime @default(now())
+  user     User   @relation(fields: [id_user], references: [id])
+  menu     Menu   @relation(fields: [id_menu], references: [id])
+  @@id([id_user, id_menu])
+}
+
+model Session {
+  session_id String   @id
+  user_id    Int
+  created_at DateTime @default(now())
+  expires_at DateTime
+  user       User     @relation(fields: [user_id], references: [id])
+}
+
 model Transaksi {
   id              Int                @id @default(autoincrement())
   user_id         Int
@@ -70,22 +88,4 @@ model Transaksi_Detail {
   price        Float
   transaksi    Transaksi @relation(fields: [transaksi_id], references: [id])
   menu         Menu      @relation(fields: [menu_id], references: [id])
-}
-
-model Cart {
-  id_user Int
-  id_menu Int
-  quantity Int
-  created_at DateTime @default(now())
-  user     User   @relation(fields: [id_user], references: [id])
-  menu     Menu   @relation(fields: [id_menu], references: [id])
-  @@id([id_user, id_menu])
-}
-
-model Session {
-  session_id String   @id
-  user_id    Int
-  created_at DateTime @default(now())
-  expires_at DateTime
-  user       User     @relation(fields: [user_id], references: [id])
 }
