@@ -100,6 +100,11 @@ const verifyToken = (req, res, next) => {
   });
 };
 
+const checkRole = (role) => (req, res, next) => {
+  if (req.user.role_id !== role) return res.status(403).send('Access denied.');
+  next();
+}
+
 module.exports = {
   register,
   login,
