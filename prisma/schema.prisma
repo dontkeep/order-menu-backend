@@ -47,16 +47,18 @@ model Menu {
   category    Kategori  @relation(fields: [category_id], references: [id])
   cart        Cart[]
   details     Transaksi_Detail[]
+  stock       Int       @default(0) // Add stock field to track inventory
 }
 
 model Cart {
-  id_user Int
-  id_menu Int
-  quantity Int
-  created_at DateTime @default(now())
-  user     User   @relation(fields: [id_user], references: [id])
-  menu     Menu   @relation(fields: [id_menu], references: [id])
-  @@id([id_user, id_menu])
+  id        Int      @id @default(autoincrement())
+  user_id   Int
+  menu_id   Int
+  quantity  Int
+  user      User     @relation(fields: [user_id], references: [id])
+  menu      Menu     @relation(fields: [menu_id], references: [id])
+
+  @@unique([user_id, menu_id]) // Ensure a user cannot have duplicate menu items in their cart
 }
 
 model Session {
