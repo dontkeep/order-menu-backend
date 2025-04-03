@@ -1,10 +1,8 @@
 const express = require('express');
 const { verifyToken } = require('../controllers/authController');
-const Cart = require('../models/Cart');
-const Menu = require('../models/Menu'); // Import Menu model for validation
+const { PrismaClient } = require('@prisma/client'); // Import Prisma Client
+const prisma = new PrismaClient(); // Initialize Prisma Client
 const { tokenizer } = require('../controllers/payment_tokenizer');
-const Transaksi = require('../models/Transaksi');
-const TransaksiDetail = require('../models/Transaksi_Detail');
 const router = express.Router();
 
 // Middleware to validate menu_id, quantity, and stock availability
@@ -15,7 +13,7 @@ const validateCartInput = async (req, res, next) => {
     return res.status(400).send('Invalid menu_id or quantity.');
   }
 
-  const menu = await Menu.findUnique({ where: { id: menu_id } });
+  const menu = await prisma.menu.findUnique({ where: { id: menu_id } });
   if (!menu) {
     return res.status(404).send('Menu item not found.');
   }
@@ -30,8 +28,9 @@ const validateCartInput = async (req, res, next) => {
 // Route to get the user's cart
 router.get('/cart', verifyToken, async (req, res, next) => {
   try {
-    const cart = await Cart.findMany({
-      where: { user_id: req.user.id }
+    const cart = await prisma.cart.findMany({
+      where: { user_id: req.user.id },
+      include: { menu: true } // Include menu details
     });
     res.json(cart);
   } catch (err) {
@@ -44,7 +43,7 @@ router.post('/cart', verifyToken, validateCartInput, async (req, res, next) => {
   const { menu_id, quantity } = req.body;
 
   try {
-    const existingItem = await Cart.findUnique({
+    const existingItem = await prisma.cart.findUnique({
       where: {
         user_id_menu_id: {
           user_id: req.user.id,
@@ -55,7 +54,7 @@ router.post('/cart', verifyToken, validateCartInput, async (req, res, next) => {
 
     if (existingItem) {
       // Update quantity if item already exists
-      const updatedItem = await Cart.update({
+      const updatedItem = await prisma.cart.update({
         where: {
           user_id_menu_id: {
             user_id: req.user.id,
@@ -70,7 +69,7 @@ router.post('/cart', verifyToken, validateCartInput, async (req, res, next) => {
     }
 
     // Add new item to the cart
-    const newItem = await Cart.create({
+    const newItem = await prisma.cart.create({
       data: {
         user_id: req.user.id,
         menu_id,
@@ -89,7 +88,7 @@ router.put('/cart/:menu_id', verifyToken, validateCartInput, async (req, res, ne
   const { quantity } = req.body;
 
   try {
-    const updatedItem = await Cart.update({
+    const updatedItem = await prisma.cart.update({
       where: {
         user_id_menu_id: {
           user_id: req.user.id,
@@ -109,7 +108,7 @@ router.delete('/cart/:menu_id', verifyToken, async (req, res, next) => {
   const { menu_id } = req.params;
 
   try {
-    await Cart.delete({
+    await prisma.cart.delete({
       where: {
         user_id_menu_id: {
           user_id: req.user.id,
@@ -126,7 +125,7 @@ router.delete('/cart/:menu_id', verifyToken, async (req, res, next) => {
 // Route to calculate the total price of the cart
 router.get('/cart/total', verifyToken, async (req, res, next) => {
   try {
-    const cartItems = await Cart.findMany({
+    const cartItems = await prisma.cart.findMany({
       where: { user_id: req.user.id },
       include: { menu: true } // Include menu details for price calculation
     });
@@ -141,7 +140,7 @@ router.get('/cart/total', verifyToken, async (req, res, next) => {
 // Route to clear the cart
 router.delete('/cart', verifyToken, async (req, res, next) => {
   try {
-    await Cart.deleteMany({
+    await prisma.cart.deleteMany({
       where: { user_id: req.user.id }
     });
     res.status(204).send();
@@ -154,7 +153,7 @@ router.delete('/cart', verifyToken, async (req, res, next) => {
 router.post('/cart/checkout', verifyToken, async (req, res, next) => {
   try {
     // Fetch cart items
-    const cartItems = await Cart.findMany({
+    const cartItems = await prisma.cart.findMany({
       where: { user_id: req.user.id },
       include: { menu: true }
     });
@@ -172,7 +171,7 @@ router.post('/cart/checkout', verifyToken, async (req, res, next) => {
 
     // Deduct stock for all items
     for (const item of cartItems) {
-      await Menu.update({
+      await prisma.menu.update({
         where: { id: item.menu_id },
         data: { stock: item.menu.stock - item.quantity }
       });
@@ -182,7 +181,7 @@ router.post('/cart/checkout', verifyToken, async (req, res, next) => {
     const total = cartItems.reduce((sum, item) => sum + item.menu.price * item.quantity, 0);
 
     // Create transaction
-    const transaction = await Transaksi.create({
+    const transaction = await prisma.transaksi.create({
       data: {
         user_id: req.user.id,
         address: req.body.address,
@@ -195,7 +194,7 @@ router.post('/cart/checkout', verifyToken, async (req, res, next) => {
 
     // Create transaction details
     for (const item of cartItems) {
-      await TransaksiDetail.create({
+      await prisma.transaksi_Detail.create({
         data: {
           transaksi_id: transaction.id,
           menu_id: item.menu_id,
@@ -206,7 +205,7 @@ router.post('/cart/checkout', verifyToken, async (req, res, next) => {
     }
 
     // Clear the cart
-    await Cart.deleteMany({
+    await prisma.cart.deleteMany({
       where: { user_id: req.user.id }
     });
 

@@ -1,6 +1,7 @@
 const express = require('express');
-const { verifyToken, checkRole } = require('../controllers/authController');
-const Menu = require('../models/Menu');
+const { verifyToken, checkRole } = require('../controllers/authController'); // Import checkRole
+const { PrismaClient } = require('@prisma/client'); // Import Prisma Client
+const prisma = new PrismaClient(); // Initialize Prisma Client
 const router = express.Router();
 
 // Route to get menus from a specified category
@@ -9,7 +10,7 @@ router.get('/menus', async (req, res, next) => {
   if (!category) return res.status(400).send('Category is required.');
 
   try {
-    const menus = await Menu.findMany({
+    const menus = await prisma.menu.findMany({
       where: {
         category: {
           name: category
@@ -24,8 +25,9 @@ router.get('/menus', async (req, res, next) => {
 
 // Route to get all menus
 router.get('/menus/all', async (req, res, next) => {
+  console.log('GET /menus/all route hit'); // Debug log
   try {
-    const menus = await Menu.findMany();
+    const menus = await prisma.menu.findMany();
     res.json(menus);
   } catch (err) {
     next(err);
@@ -37,7 +39,7 @@ router.get('/menus/:id', async (req, res, next) => {
   const { id } = req.params;
 
   try {
-    const menu = await Menu.findUnique({
+    const menu = await prisma.menu.findUnique({
       where: { id: parseInt(id) }
     });
 
@@ -49,11 +51,11 @@ router.get('/menus/:id', async (req, res, next) => {
 });
 
 // Route to add a new menu (Admin only)
-router.post('/menus', verifyToken, checkRole('admin'), async (req, res, next) => {
+router.post('/menus', verifyToken, checkRole(1), async (req, res, next) => { // Ensure checkRole is used correctly
   const { name, price, category_id } = req.body;
 
   try {
-    const newMenu = await Menu.create({
+    const newMenu = await prisma.menu.create({
       data: {
         name,
         price,
@@ -72,7 +74,7 @@ router.put('/menus/:id', verifyToken, checkRole('admin'), async (req, res, next)
   const { name, price, category_id } = req.body;
 
   try {
-    const updatedMenu = await Menu.update({
+    const updatedMenu = await prisma.menu.update({
       where: { id: parseInt(id) },
       data: {
         name,
@@ -96,7 +98,7 @@ router.put('/menus/:id/stock', verifyToken, checkRole('admin'), async (req, res,
   }
 
   try {
-    const updatedMenu = await Menu.update({
+    const updatedMenu = await prisma.menu.update({
       where: { id: parseInt(id) },
       data: { stock }
     });
@@ -111,7 +113,7 @@ router.delete('/menus/:id', verifyToken, checkRole('admin'), async (req, res, ne
   const { id } = req.params;
 
   try {
-    await Menu.delete({
+    await prisma.menu.delete({
       where: { id: parseInt(id) }
     });
     res.status(204).send();
@@ -123,7 +125,7 @@ router.delete('/menus/:id', verifyToken, checkRole('admin'), async (req, res, ne
 // Route to get all categories
 router.get('/categories', async (req, res, next) => {
   try {
-    const categories = await Menu.findManyCategories();
+    const categories = await prisma.kategori.findMany();
     res.json(categories);
   } catch (err) {
     next(err);
@@ -135,7 +137,7 @@ router.post('/categories', verifyToken, checkRole('admin'), async (req, res, nex
   const { name } = req.body;
 
   try {
-    const newCategory = await Menu.createCategory({
+    const newCategory = await prisma.kategori.create({
       data: { name }
     });
     res.status(201).json(newCategory);
@@ -150,7 +152,7 @@ router.put('/categories/:id', verifyToken, checkRole('admin'), async (req, res, 
   const { name } = req.body;
 
   try {
-    const updatedCategory = await Menu.updateCategory({
+    const updatedCategory = await prisma.kategori.update({
       where: { id: parseInt(id) },
       data: { name }
     });
@@ -165,7 +167,7 @@ router.delete('/categories/:id', verifyToken, checkRole('admin'), async (req, re
   const { id } = req.params;
 
   try {
-    await Menu.deleteCategory({
+    await prisma.kategori.delete({
       where: { id: parseInt(id) }
     });
     res.status(204).send();

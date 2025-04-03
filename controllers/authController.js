@@ -109,5 +109,6 @@ module.exports = {
   register,
   login,
   logout,
-  verifyToken
+  verifyToken,
+  checkRole // Ensure checkRole is exported
 };

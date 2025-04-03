@@ -1,6 +1,7 @@
 const express = require('express');
 const { verifyToken, checkRole } = require('../controllers/authController');
-const prisma = require('../models/PrismaClient'); // Assuming Prisma is used
+const { PrismaClient } = require('@prisma/client'); // Correct Prisma Client import
+const prisma = new PrismaClient(); // Initialize Prisma Client
 const router = express.Router();
 
 // Route to get admin dashboard data

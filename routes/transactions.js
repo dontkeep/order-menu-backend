@@ -1,12 +1,13 @@
 const express = require('express');
 const { verifyToken, checkRole } = require('../controllers/authController');
-const Transaksi = require('../models/Transaksi');
+const { PrismaClient } = require('@prisma/client'); // Import Prisma Client
+const prisma = new PrismaClient(); // Initialize Prisma Client
 const router = express.Router();
 
 // Route for users to view their transaction history
 router.get('/transactions', verifyToken, async (req, res, next) => {
   try {
-    const transactions = await Transaksi.findMany({
+    const transactions = await prisma.transaksi.findMany({
       where: { user_id: req.user.id },
       include: { details: true }
     });
@@ -19,7 +20,7 @@ router.get('/transactions', verifyToken, async (req, res, next) => {
 // Route for admins to view all transaction histories
 router.get('/transactions/all', verifyToken, checkRole('admin'), async (req, res, next) => {
   try {
-    const transactions = await Transaksi.findMany({
+    const transactions = await prisma.transaksi.findMany({
       include: { details: true, user: true }
     });
     res.json(transactions);
@@ -33,7 +34,7 @@ router.get('/transactions/:id', verifyToken, async (req, res, next) => {
   const { id } = req.params;
 
   try {
-    const transaction = await Transaksi.findUnique({
+    const transaction = await prisma.transaksi.findUnique({
       where: { id: parseInt(id) },
       include: { details: true, user: true }
     });
@@ -56,7 +57,7 @@ router.put('/transactions/:id/status', verifyToken, checkRole('admin'), async (r
       return res.status(400).send('Invalid status.');
     }
 
-    const updatedTransaction = await Transaksi.update({
+    const updatedTransaction = await prisma.transaksi.update({
       where: { id: parseInt(id) },
       data: { status }
     });
@@ -95,7 +96,7 @@ router.post('/transactions/payment-confirmation', async (req, res, next) => {
         return res.status(400).send('Unknown transaction status.');
     }
 
-    const updatedTransaction = await Transaksi.update({
+    const updatedTransaction = await prisma.transaksi.update({
       where: { id: transactionId },
       data: { status }
     });

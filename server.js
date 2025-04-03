@@ -2,10 +2,16 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const { tokenizer } = require('./controllers/payment_tokenizer');
-const authRoutes = require('./routes/auth');
 const bcrypt = require('bcrypt');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+
+// Import routes
+const authRoutes = require('./routes/auth');
+const menuRoutes = require('./routes/menu');
+const cartRoutes = require('./routes/cart');
+const transactionRoutes = require('./routes/transactions');
+const adminRoutes = require('./routes/admin');
 
 dotenv.config();
 
@@ -18,6 +24,10 @@ app.use(express.json());
 
 // Routes
 app.use('/auth', authRoutes);
+app.use('/menus', menuRoutes);
+app.use('/cart', cartRoutes);
+app.use('/transactions', transactionRoutes);
+app.use('/admin', adminRoutes);
 app.post('/payment', tokenizer);
 
 // Error handling middleware
@@ -31,23 +41,9 @@ app.use((req, res, next) => {
   res.status(404).send('Route not found');
 });
 
-// Function to create initial roles and admin user
-const createInitialRolesAndAdmin = async () => {
+// Function to create initial admin user
+const createInitialAdmin = async () => {
   try {
-    // Ensure roles exist
-    const roles = [
-      { id: 0, name: 'admin' },
-      { id: 1, name: 'user' }
-    ];
-
-    for (const role of roles) {
-      const existingRole = await prisma.role.findUnique({ where: { id: role.id } });
-      if (!existingRole) {
-        await prisma.role.create({ data: role });
-        console.log(`Role created: ${role.name}`);
-      }
-    }
-
     // Create initial admin user
     const adminEmail = 'admin@example.com';
     const adminPassword = 'admin123';
@@ -71,7 +67,7 @@ const createInitialRolesAndAdmin = async () => {
           city: 'Admin City',
           regency: 'Admin Regency',
           district: 'Admin District',
-          role_id: 0 // Admin role
+          role_id: 1 // Use role_id 1 for admin
         }
       });
 
@@ -80,12 +76,12 @@ const createInitialRolesAndAdmin = async () => {
       console.log('Admin user already exists.');
     }
   } catch (err) {
-    console.error('Error creating initial roles or admin:', err);
+    console.error('Error creating initial admin:', err);
   }
 };
 
 // Start server
 app.listen(port, async () => {
   console.log(`Server is running on http://localhost:${port}`);
-  await createInitialRolesAndAdmin(); 
+  await createInitialAdmin(); 
 });
