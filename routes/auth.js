@@ -1,5 +1,5 @@
 const express = require('express');
-const { register, login, logout } = require('../controllers/authController');
+const { register, login, logout, verifyToken } = require('../controllers/authController'); // Import verifyToken
 const router = express.Router();
 
 // Route to get user profile
