@@ -1,5 +1,7 @@
 const express = require('express');
 const { register, login, logout, verifyToken } = require('../controllers/authController'); // Import verifyToken
+const { PrismaClient } = require('@prisma/client'); // Import Prisma Client
+const prisma = new PrismaClient(); // Initialize Prisma Client
 const router = express.Router();
 
 // Route to get user profile

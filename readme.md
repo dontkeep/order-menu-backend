@@ -197,7 +197,37 @@ Authorization: Bearer JWT_TOKEN
 **Endpoint**: `GET /menus/:id`  
 **Description**: Fetch details of a specific menu item by its ID.  
 
-### 7. Get All Categories
+### 7. Get Menus by Category
+**Endpoint**: `GET /menus`  
+**Description**: Fetch menus based on a specific category.  
+**Query Parameters**:
+- `category` (required): The name of the category to filter menus by.
+**Example Request**:
+```
+GET /menus?category=Drinks
+```
+**Response**:
+```json
+{
+  "category": "Drinks",
+  "menus": [
+    {
+      "id": 1,
+      "name": "Coca Cola",
+      "price": 1.99,
+      "stock": 100
+    },
+    {
+      "id": 2,
+      "name": "Pepsi",
+      "price": 1.89,
+      "stock": 50
+    }
+  ]
+}
+```
+
+### 8. Get All Categories
 **Endpoint**: `GET /categories`  
 **Description**: Fetch all categories.  
 

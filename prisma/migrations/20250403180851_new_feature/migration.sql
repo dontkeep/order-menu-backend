@@ -38,9 +38,3 @@ ALTER TABLE `Cart` ADD CONSTRAINT `Cart_user_id_fkey` FOREIGN KEY (`user_id`) RE
 
 -- AddForeignKey
 ALTER TABLE `Cart` ADD CONSTRAINT `Cart_menu_id_fkey` FOREIGN KEY (`menu_id`) REFERENCES `Menu`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- InsertData Role
-INSERT INTO Role (name) VALUES
-('admin'),
-('kasir'),
-('pelanggan');
