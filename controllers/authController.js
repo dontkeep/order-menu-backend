@@ -118,10 +118,13 @@ const verifyToken = (req, res, next) => {
   });
 };
 
-const checkRole = (role) => (req, res, next) => {
-  if (req.user.role_id !== role) return res.status(403).send('Access denied.');
+const checkRole = (requiredRole) => (req, res, next) => {
+  console.log(`User role_id: ${req.user.role_id}, Required role_id: ${requiredRole}`); // Debug log
+  if (req.user.role_id !== requiredRole) {
+    return res.status(403).send('Access denied.');
+  }
   next();
-}
+};
 
 module.exports = {
   register,

@@ -5,7 +5,7 @@ const prisma = new PrismaClient(); // Initialize Prisma Client
 const router = express.Router();
 
 // Route to get admin dashboard data
-router.get('/dashboard', verifyToken, checkRole('admin'), async (req, res, next) => {
+router.get('/dashboard', verifyToken, checkRole(1), async (req, res, next) => { // Use role_id 1 for admin
   try {
     const totalSales = await prisma.transaksi.aggregate({
       _sum: { total: true }
