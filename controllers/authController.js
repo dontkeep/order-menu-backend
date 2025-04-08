@@ -84,18 +84,36 @@ const logout = async (req, res, next) => {
 };
 
 const verifyToken = (req, res, next) => {
-  const token = req.headers.authorization.split(' ')[1];
-  if (!token) return res.status(401).send('Access denied. No token provided.');
+  const authHeader = req.headers.authorization;
+
+  // Check if the Authorization header exists
+  if (!authHeader) {
+    return res.status(401).send('Access denied. No token provided.');
+  }
+
+  // Check if the Authorization header is properly formatted
+  const token = authHeader.split(' ')[1];
+  if (!token) {
+    return res.status(401).send('Access denied. Invalid token format.');
+  }
 
   jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
     if (err) return res.status(401).send('Invalid token.');
 
-    const session = await prisma.session.findUnique({ where: { session_id: decoded.sessionId } });
+    const session = await prisma.session.findUnique({
+      where: { session_id: decoded.sessionId },
+      include: { user: true } // Include user details
+    });
+
     if (!session || new Date(session.expires_at) < new Date()) {
       return res.status(401).send('Session expired.');
     }
 
-    req.user = decoded;
+    req.user = {
+      id: session.user.id, // Attach user ID
+      role_id: session.user.role_id, // Attach user role
+      email: session.user.email // Attach user email (optional)
+    };
     next();
   });
 };
