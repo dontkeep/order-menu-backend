@@ -1,8 +1,22 @@
 const express = require('express');
-const { verifyToken, checkRole } = require('../controllers/authController'); // Import checkRole
-const { PrismaClient } = require('@prisma/client'); // Import Prisma Client
-const prisma = new PrismaClient(); // Initialize Prisma Client
+const { verifyToken, checkRole } = require('../controllers/authController');
+const { PrismaClient } = require('@prisma/client');
+const multer = require('multer'); // Import multer
+const path = require('path'); // Import path for file handling
+const prisma = new PrismaClient();
 const router = express.Router();
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/'); // Save files in the 'uploads' directory
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + path.extname(file.originalname)); // Generate a unique filename
+  }
+});
+const upload = multer({ storage });
 
 // Route to get menus from a specified category
 router.get('/menus', async (req, res, next) => {
@@ -51,15 +65,24 @@ router.get('/menus/:id', async (req, res, next) => {
 });
 
 // Route to add a new menu (Admin only)
-router.post('/menus', verifyToken, checkRole(1), async (req, res, next) => { // Ensure checkRole is used correctly
-  const { name, price, category_id } = req.body;
+router.post('/menus', verifyToken, checkRole(1), upload.single('image'), async (req, res, next) => {
+  const { name, price, category_id, stock } = req.body;
 
   try {
+    // Check if an image file was uploaded
+    if (!req.file) {
+      return res.status(400).send('Image file is required.');
+    }
+
     const newMenu = await prisma.menu.create({
       data: {
         name,
-        price,
-        category_id
+        price: parseFloat(price),
+        image: req.file.filename, // Save the filename of the uploaded image
+        stock: stock ? parseInt(stock) : 0, // Default stock to 0 if not provided
+        category: {
+          connect: { id: parseInt(category_id) } // Use connect to link to an existing category
+        }
       }
     });
     res.status(201).json(newMenu);
@@ -69,7 +92,7 @@ router.post('/menus', verifyToken, checkRole(1), async (req, res, next) => { // 
 });
 
 // Route to edit a menu (Admin only)
-router.put('/menus/:id', verifyToken, checkRole('admin'), async (req, res, next) => {
+router.put('/menus/:id', verifyToken, checkRole(1), async (req, res, next) => { // Use role_id 1 for admin
   const { id } = req.params;
   const { name, price, category_id } = req.body;
 
@@ -89,7 +112,7 @@ router.put('/menus/:id', verifyToken, checkRole('admin'), async (req, res, next)
 });
 
 // Route to update the stock of a menu (Admin only)
-router.put('/menus/:id/stock', verifyToken, checkRole('admin'), async (req, res, next) => {
+router.put('/menus/:id/stock', verifyToken, checkRole(1), async (req, res, next) => { // Use role_id 1 for admin
   const { id } = req.params;
   const { stock } = req.body;
 
@@ -109,7 +132,7 @@ router.put('/menus/:id/stock', verifyToken, checkRole('admin'), async (req, res,
 });
 
 // Route to delete a menu (Admin only)
-router.delete('/menus/:id', verifyToken, checkRole('admin'), async (req, res, next) => {
+router.delete('/menus/:id', verifyToken, checkRole(1), async (req, res, next) => { // Use role_id 1 for admin
   const { id } = req.params;
 
   try {
@@ -133,7 +156,7 @@ router.get('/categories', async (req, res, next) => {
 });
 
 // Route to add a new category (Admin only)
-router.post('/categories', verifyToken, checkRole('admin'), async (req, res, next) => {
+router.post('/categories', verifyToken, checkRole(1), async (req, res, next) => { // Use role_id 1 for admin
   const { name } = req.body;
 
   try {
@@ -147,7 +170,7 @@ router.post('/categories', verifyToken, checkRole('admin'), async (req, res, nex
 });
 
 // Route to edit a category (Admin only)
-router.put('/categories/:id', verifyToken, checkRole('admin'), async (req, res, next) => {
+router.put('/categories/:id', verifyToken, checkRole(1), async (req, res, next) => { // Use role_id 1 for admin
   const { id } = req.params;
   const { name } = req.body;
 
@@ -163,7 +186,7 @@ router.put('/categories/:id', verifyToken, checkRole('admin'), async (req, res, 
 });
 
 // Route to delete a category (Admin only)
-router.delete('/categories/:id', verifyToken, checkRole('admin'), async (req, res, next) => {
+router.delete('/categories/:id', verifyToken, checkRole(1), async (req, res, next) => { // Use role_id 1 for admin
   const { id } = req.params;
 
   try {

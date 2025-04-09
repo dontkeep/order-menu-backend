@@ -22,6 +22,9 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+// Serve static files from the 'uploads' directory
+app.use('/uploads', express.static('uploads'));
+
 // Routes
 app.use('/auth', authRoutes);
 app.use('/menus', menuRoutes);
