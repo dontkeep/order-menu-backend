@@ -41,13 +41,32 @@ router.get('/menus', async (req, res, next) => {
 router.get('/menus/all', async (req, res, next) => {
   console.log('GET /menus/all route hit'); // Debug log
   try {
-    const menus = await prisma.menu.findMany();
-    res.json(menus);
+    const menus = await prisma.menu.findMany({
+      include: {
+        category: {
+          select: {
+            name: true // Include the category name
+          }
+        }
+      }
+    });
+
+    // Map the response to include category_name
+    const formattedMenus = menus.map(menu => ({
+      id: menu.id,
+      name: menu.name,
+      price: menu.price,
+      image: menu.image,
+      category_id: menu.category_id,
+      category_name: menu.category?.name || null, // Add category_name
+      stock: menu.stock
+    }));
+
+    res.json(formattedMenus);
   } catch (err) {
     next(err);
   }
 });
-
 // Route to get menu details by ID
 router.get('/menus/:id', async (req, res, next) => {
   const { id } = req.params;
@@ -101,8 +120,10 @@ router.put('/menus/:id', verifyToken, checkRole(1), async (req, res, next) => { 
       where: { id: parseInt(id) },
       data: {
         name,
-        price,
-        category_id
+        price: parseFloat(price),
+        category: {
+          connect: { id: parseInt(category_id) } // Use connect to link to an existing category
+        }
       }
     });
     res.json(updatedMenu);
