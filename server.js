@@ -45,14 +45,21 @@ app.use((req, res, next) => {
 });
 
 // Function to create initial admin user
-const createInitialAdmin = async () => {
+const createInitialAccounts = async () => {
   try {
-    // Create initial admin user
+    // Admin user
     const adminEmail = 'admin@example.com';
     const adminPassword = 'admin123';
 
+    const userEmail = 'user@example.com';
+    const userPassword = 'user123';
+
     const existingAdmin = await prisma.user.findFirst({
       where: { email: adminEmail }
+    });
+
+    const existingUser = await prisma.user.findFirst({
+      where: { email: userEmail }
     });
 
     if (!existingAdmin) {
@@ -70,21 +77,47 @@ const createInitialAdmin = async () => {
           city: 'Admin City',
           regency: 'Admin Regency',
           district: 'Admin District',
-          role_id: 1 // Use role_id 1 for admin
+          role_id: 1 // Admin
         }
       });
 
-      console.log(`Initial admin created: ${adminEmail} / ${adminPassword}`);
+      console.log(`✅ Admin created: ${adminEmail} / ${adminPassword}`);
     } else {
       console.log('Admin user already exists.');
     }
+
+    if (!existingUser) {
+      const hashedPassword = await bcrypt.hash(userPassword, 10);
+
+      await prisma.user.create({
+        data: {
+          first_name: 'User',
+          last_name: 'Sample',
+          email: userEmail,
+          password: hashedPassword,
+          phone_number: '0987654321',
+          address_detail: 'User Address',
+          province: 'User Province',
+          city: 'User City',
+          regency: 'User Regency',
+          district: 'User District',
+          role_id: 3 // Pelanggan
+        }
+      });
+
+      console.log(`✅ User created: ${userEmail} / ${userPassword}`);
+    } else {
+      console.log('User already exists.');
+    }
+
   } catch (err) {
-    console.error('Error creating initial admin:', err);
+    console.error('❌ Error creating initial accounts:', err);
   }
 };
+
 
 // Start server
 app.listen(port, async () => {
   console.log(`Server is running on http://localhost:${port}`);
-  await createInitialAdmin(); 
+  await createInitialAccounts(); 
 });
