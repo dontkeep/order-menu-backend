@@ -48,6 +48,7 @@ model Menu {
   cart        Cart[]
   details     Transaksi_Detail[]
   stock       Int       @default(0) // Add stock field to track inventory
+  description String? 
 }
 
 model Cart {

@@ -59,7 +59,8 @@ router.get('/menus/all', async (req, res, next) => {
       image: menu.image,
       category_id: menu.category_id,
       category_name: menu.category?.name || null, // Add category_name
-      stock: menu.stock
+      stock: menu.stock,
+      description: menu.description // Include description if needed
     }));
 
     res.json(formattedMenus);
@@ -98,7 +99,8 @@ router.post('/menus', verifyToken, checkRole(1), upload.single('image'), async (
         name,
         price: parseFloat(price),
         image: req.file.filename, // Save the filename of the uploaded image
-        stock: stock ? parseInt(stock) : 0, // Default stock to 0 if not provided
+        stock: stock ? parseInt(stock) : 0,
+        description, // Default stock to 0 if not provided
         category: {
           connect: { id: parseInt(category_id) } // Use connect to link to an existing category
         }
@@ -121,6 +123,7 @@ router.put('/menus/:id', verifyToken, checkRole(1), async (req, res, next) => { 
       data: {
         name,
         price: parseFloat(price),
+        description,
         category: {
           connect: { id: parseInt(category_id) } // Use connect to link to an existing category
         }
