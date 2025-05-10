@@ -4,6 +4,7 @@ const dotenv = require('dotenv');
 const { tokenizer } = require('./controllers/payment_tokenizer');
 const bcrypt = require('bcrypt');
 const { PrismaClient } = require('@prisma/client');
+
 const prisma = new PrismaClient();
 
 // Import routes

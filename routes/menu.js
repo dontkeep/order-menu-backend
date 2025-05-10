@@ -224,3 +224,4 @@ router.delete('/categories/:id', verifyToken, checkRole(1), async (req, res, nex
 });
 
 module.exports = router;
+
