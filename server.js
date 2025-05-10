@@ -13,6 +13,7 @@ const menuRoutes = require('./routes/menu');
 const cartRoutes = require('./routes/cart');
 const transactionRoutes = require('./routes/transactions');
 const adminRoutes = require('./routes/admin');
+const profileRoutes = require('./routes/profile');
 
 dotenv.config();
 
@@ -32,6 +33,7 @@ app.use('/menus', menuRoutes);
 app.use('/cart', cartRoutes);
 app.use('/transactions', transactionRoutes);
 app.use('/admin', adminRoutes);
+app.use('/profile', profileRoutes);
 app.post('/payment', tokenizer);
 
 // Error handling middleware

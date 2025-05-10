@@ -72,7 +72,7 @@ router.put('/transactions/:id/status', verifyToken, checkRole('admin'), async (r
 router.post('/transactions/payment-confirmation', async (req, res, next) => {
   try {
     const { order_id, transaction_status } = req.body;
-
+    console.log('Payment confirmation received:', req.body);
     if (!order_id || !transaction_status) {
       return res.status(400).send('Invalid payload.');
     }
