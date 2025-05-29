@@ -25,7 +25,7 @@ router.get('/dashboard', verifyToken, checkRole(1), async (req, res, next) => { 
 });
 
 // Route to view all users
-router.get('/users', verifyToken, checkRole('admin'), async (req, res, next) => {
+router.get('/users', verifyToken, checkRole(1), async (req, res, next) => {
   try {
     const users = await prisma.user.findMany({
       select: {
@@ -43,7 +43,7 @@ router.get('/users', verifyToken, checkRole('admin'), async (req, res, next) => 
 });
 
 // Route to update a user's role
-router.put('/users/:id/role', verifyToken, checkRole('admin'), async (req, res, next) => {
+router.put('/users/:id/role', verifyToken, checkRole(1), async (req, res, next) => {
   const { id } = req.params;
   const { role_id } = req.body;
 
@@ -59,7 +59,7 @@ router.put('/users/:id/role', verifyToken, checkRole('admin'), async (req, res, 
 });
 
 // Route to deactivate a user
-router.delete('/users/:id', verifyToken, checkRole('admin'), async (req, res, next) => {
+router.delete('/users/:id', verifyToken, checkRole(1), async (req, res, next) => {
   const { id } = req.params;
 
   try {
@@ -73,7 +73,7 @@ router.delete('/users/:id', verifyToken, checkRole('admin'), async (req, res, ne
 });
 
 // Route to get sales report
-router.get('/sales-report', verifyToken, checkRole('admin'), async (req, res, next) => {
+router.get('/sales-report', verifyToken, checkRole(1), async (req, res, next) => {
   try {
     const totalSales = await prisma.transaksi.aggregate({
       _sum: { total: true }
