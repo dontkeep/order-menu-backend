@@ -31,7 +31,7 @@ router.get('/users', verifyToken, checkRole(1), async (req, res, next) => {
       select: {
         id: true,
         first_name: true,
-        last_name: true,
+        last_name: true, 
         email: true,
         role: true
       }
@@ -117,6 +117,27 @@ router.get('/sales-report', verifyToken, checkRole(1), async (req, res, next) =>
       salesByCategory,
       topSellingItems
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get("/stock-statistics", verifyToken, checkRole(1), async (req, res, next) => {
+  try {
+    const stockStatistics = await prisma.menu.findMany({
+      select: {
+        id: true,
+        name: true,
+        stock: true,
+        category: {
+          select: {
+            name: true
+          }
+        }
+      }
+    });
+
+    res.json(stockStatistics);
   } catch (err) {
     next(err);
   }
