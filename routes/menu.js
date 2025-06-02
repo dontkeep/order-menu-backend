@@ -86,7 +86,7 @@ router.get('/menus/:id', async (req, res, next) => {
 
 // Route to add a new menu (Admin only)
 router.post('/menus', verifyToken, checkRole(1), upload.single('image'), async (req, res, next) => {
-  const { name, price, category_id, stock } = req.body;
+  const { name, price, category_id, stock, description } = req.body;
 
   try {
     // Check if an image file was uploaded
