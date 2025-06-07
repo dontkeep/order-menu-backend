@@ -115,7 +115,7 @@ router.post('/menus', verifyToken, checkRole(1), upload.single('image'), async (
 // Route to edit a menu (Admin only)
 router.put('/menus/:id', verifyToken, checkRole(1), async (req, res, next) => { // Use role_id 1 for admin
   const { id } = req.params;
-  const { name, price, category_id } = req.body;
+  const { name, price, category_id, description, stock } = req.body;
 
   try {
     const updatedMenu = await prisma.menu.update({
@@ -124,6 +124,7 @@ router.put('/menus/:id', verifyToken, checkRole(1), async (req, res, next) => { 
         name,
         price: parseFloat(price),
         description,
+        stock: parseInt(stock), // Add stock field
         category: {
           connect: { id: parseInt(category_id) } // Use connect to link to an existing category
         }
