@@ -47,10 +47,10 @@ app.use((req, res, next) => {
   res.status(404).send('Route not found');
 });
 
-// Function to create initial admin user
+// Function to create initial accounts and categories
 const createInitialAccounts = async () => {
   try {
-    // Admin user
+    // ======= Admin and User Account Creation =======
     const adminEmail = 'admin@example.com';
     const adminPassword = 'admin123';
 
@@ -67,7 +67,6 @@ const createInitialAccounts = async () => {
 
     if (!existingAdmin) {
       const hashedPassword = await bcrypt.hash(adminPassword, 10);
-
       await prisma.user.create({
         data: {
           first_name: 'Admin',
@@ -83,7 +82,6 @@ const createInitialAccounts = async () => {
           role_id: 1 // Admin
         }
       });
-
       console.log(`✅ Admin created: ${adminEmail} / ${adminPassword}`);
     } else {
       console.log('Admin user already exists.');
@@ -91,7 +89,6 @@ const createInitialAccounts = async () => {
 
     if (!existingUser) {
       const hashedPassword = await bcrypt.hash(userPassword, 10);
-
       await prisma.user.create({
         data: {
           first_name: 'User',
@@ -107,20 +104,32 @@ const createInitialAccounts = async () => {
           role_id: 3 // Pelanggan
         }
       });
-
       console.log(`✅ User created: ${userEmail} / ${userPassword}`);
     } else {
       console.log('User already exists.');
     }
 
+    // ======= Delivery Category Creation =======
+    const existingDeliveryCategory = await prisma.kategori.findFirst({
+      where: { name: 'Delivery' }
+    });
+
+    if (!existingDeliveryCategory) {
+      await prisma.kategori.create({
+        data: { name: 'Delivery' }
+      });
+      console.log('✅ Delivery category created.');
+    } else {
+      console.log('Delivery category already exists.');
+    }
+
   } catch (err) {
-    console.error('❌ Error creating initial accounts:', err);
+    console.error('❌ Error creating initial data:', err);
   }
 };
 
-
 // Start server
 app.listen(port, async () => {
-  console.log(`Server is running on http://localhost:${port}`);
-  await createInitialAccounts(); 
+  console.log(`🚀 Server is running on http://localhost:${port}`);
+  await createInitialAccounts();
 });
