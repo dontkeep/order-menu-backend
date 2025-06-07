@@ -18,7 +18,7 @@ router.get('/transactions', verifyToken, async (req, res, next) => {
 });
 
 // Route for admins to view all transaction histories
-router.get('/transactions/all', verifyToken, checkRole('admin'), async (req, res, next) => {
+router.get('/transactions/all', verifyToken, checkRole(1), async (req, res, next) => {
   try {
     const transactions = await prisma.transaksi.findMany({
       include: { details: true, user: true }
@@ -47,7 +47,7 @@ router.get('/transactions/:id', verifyToken, async (req, res, next) => {
 });
 
 // Route for admins to update the status of an order
-router.put('/transactions/:id/status', verifyToken, checkRole('admin'), async (req, res, next) => {
+router.put('/transactions/:id/status', verifyToken, checkRole(1), async (req, res, next) => {
   const { id } = req.params;
   const { status } = req.body;
 
@@ -83,6 +83,11 @@ router.post('/transactions/payment-confirmation', async (req, res, next) => {
     switch (transaction_status) {
       case 'settlement':
         status = 'paid';
+        // Also update delivery_status to 'On Process' when paid
+        await prisma.transaksi.update({
+          where: { id: transactionId },
+          data: { delivery_status: 'On Process' }
+        });
         break;
       case 'cancel':
       case 'deny':
@@ -102,6 +107,81 @@ router.post('/transactions/payment-confirmation', async (req, res, next) => {
     });
 
     res.json({ message: 'Transaction status updated', transaction: updatedTransaction });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// User marks order as completed
+router.put('/transactions/:id/complete', verifyToken, async (req, res, next) => {
+  const { id } = req.params;
+  try {
+    // Only allow if the transaction belongs to the user
+    const transaksi = await prisma.transaksi.findUnique({ where: { id: parseInt(id) } });
+    if (!transaksi || transaksi.user_id !== req.user.id) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+    const updated = await prisma.transaksi.update({
+      where: { id: parseInt(id) },
+      data: { delivery_status: 'Selesai', status: 'completed' }
+    });
+    res.json(updated);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// User rejects order
+router.put('/transactions/:id/reject', verifyToken, async (req, res, next) => {
+  const { id } = req.params;
+  try {
+    // Only allow if the transaction belongs to the user
+    const transaksi = await prisma.transaksi.findUnique({ where: { id: parseInt(id) } });
+    if (!transaksi || transaksi.user_id !== req.user.id) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+    const updated = await prisma.transaksi.update({
+      where: { id: parseInt(id) },
+      data: { delivery_status: 'Ditolak', status: 'cancelled' }
+    });
+    res.json(updated);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Get all transactions for the authenticated user
+router.get('/my-transactions', verifyToken, async (req, res, next) => {
+  try {
+    const transactions = await prisma.transaksi.findMany({
+      where: { user_id: req.user.id },
+      include: { details: true, user: true }
+    });
+    res.json(transactions);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Admin endpoint to auto-complete transactions stuck in 'On Process' for 2+ days
+router.put('/transactions/auto-complete', verifyToken, checkRole(1), async (req, res, next) => {
+  try {
+    const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
+    const toUpdate = await prisma.transaksi.findMany({
+      where: {
+        delivery_status: 'On Process',
+        created_at: { lte: twoDaysAgo },
+      },
+    });
+    const updated = [];
+    for (const trx of toUpdate) {
+      const result = await prisma.transaksi.update({
+        where: { id: trx.id },
+        data: { delivery_status: 'Selesai', status: 'completed' },
+      });
+      updated.push(result);
+    }
+    res.json({ message: `${updated.length} transaction(s) auto-completed.`, transactions: updated });
   } catch (err) {
     next(err);
   }
