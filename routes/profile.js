@@ -48,4 +48,77 @@ router.get('/', async (req, res) => {
   }
 });
 
+// PUT endpoint for updating profile (excluding email)
+router.put('/', async (req, res) => {
+  try {
+    // Verify the user from the token
+    const token = req.headers.authorization;
+    if (!token) {
+      return res.status(401).json({ error: 'Authorization token is missing' });
+    }
+
+    const userId = await verifyUserFromToken(token);
+    if (!userId) {
+      return res.status(401).json({ error: 'Invalid or expired token' });
+    }
+
+    // Extract update data from request body
+    const { 
+      first_name, 
+      last_name, 
+      phone_number, 
+      address_detail, 
+      province, 
+      city, 
+      regency, 
+      district 
+    } = req.body;
+
+    // Validate required fields
+    if (!first_name || !last_name) {
+      return res.status(400).json({ error: 'First name and last name are required' });
+    }
+
+    // Update user data
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        first_name,
+        last_name,
+        phone_number,
+        address_detail,
+        province,
+        city,
+        regency,
+        district
+      },
+      select: {
+        id: true,
+        first_name: true,
+        last_name: true,
+        email: true,
+        phone_number: true,
+        address_detail: true,
+        province: true,
+        city: true,
+        regency: true,
+        district: true
+      }
+    });
+
+    res.json({
+      message: 'Profile updated successfully',
+      user: updatedUser
+    });
+  } catch (error) {
+    console.error('Error updating user profile:', error);
+    
+    if (error.code === 'P2025') {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    res.status(500).json({ error: 'Failed to update user profile' });
+  }
+});
+
 module.exports = router;
