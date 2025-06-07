@@ -48,4 +48,55 @@ router.get('/', async (req, res) => {
   }
 });
 
+// PUT /profile - Update user profile
+router.put('/', async (req, res) => {
+  try {
+    const token = req.headers.authorization;
+    if (!token) {
+      return res.status(401).json({ error: 'Authorization token is missing' });
+    }
+    const userId = await verifyUserFromToken(token);
+    if (!userId) {
+      return res.status(401).json({ error: 'Invalid or expired token' });
+    }
+
+    // Only allow updating certain fields
+    const allowedFields = [
+      'first_name', 'last_name', 'phone_number', 'address_detail',
+      'province', 'city', 'regency', 'district'
+    ];
+    const updateData = {};
+    for (const field of allowedFields) {
+      if (req.body[field] !== undefined) {
+        updateData[field] = req.body[field];
+      }
+    }
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({ error: 'No valid fields to update' });
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+      select: {
+        id: true,
+        first_name: true,
+        last_name: true,
+        email: true,
+        phone_number: true,
+        address_detail: true,
+        province: true,
+        city: true,
+        regency: true,
+        district: true,
+        role_id: true
+      }
+    });
+    res.json(updatedUser);
+  } catch (error) {
+    console.error('Error updating user profile:', error);
+    res.status(500).json({ error: 'Failed to update user profile' });
+  }
+});
+
 module.exports = router;
