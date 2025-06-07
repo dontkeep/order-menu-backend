@@ -42,6 +42,43 @@ router.get('/users', verifyToken, checkRole(1), async (req, res, next) => {
   }
 });
 
+// Route to get dashboard statistics
+router.get("/statistik", verifyToken, checkRole(1), async (req, res, next) => {
+  try {
+    const stockKosong = await prisma.menu.count({
+      where: {
+        stock: 0,
+      },
+    });
+
+    const totalProduk = await prisma.menu.count();
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const besok = new Date(today);
+    besok.setDate(today.getDate() + 1);
+
+    const transaksiHariIni = await prisma.transaksi.count({
+      where: {
+        created_at: {
+          gte: today,
+          lt: besok,
+        },
+      },
+    });
+
+    res.json({
+      stockKosong,
+      totalProduk,
+      transaksiHariIni,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+
 // Route to update a user's role
 router.put('/users/:id/role', verifyToken, checkRole(1), async (req, res, next) => {
   const { id } = req.params;
@@ -72,51 +109,35 @@ router.delete('/users/:id', verifyToken, checkRole(1), async (req, res, next) =>
   }
 });
 
-// Route to get sales report
-router.get('/sales-report', verifyToken, checkRole(1), async (req, res, next) => {
+// Route to get all transactions
+router.get('/transactions', verifyToken, checkRole(1), async (req, res, next) => {
   try {
-    const totalSales = await prisma.transaksi.aggregate({
-      _sum: { total: true }
-    });
-
-    const salesByCategory = await prisma.kategori.findMany({
+    const transactions = await prisma.transaksi.findMany({
       include: {
-        menus: {
+        user: {
+          select: {
+            first_name: true,
+            last_name: true,
+            email: true
+          }
+        },
+        details: {
           include: {
-            details: {
+            menu: {
               select: {
-                quantity: true,
+                name: true,
                 price: true
               }
             }
           }
         }
+      },
+      orderBy: {
+        created_at: 'desc'
       }
     });
 
-    const topSellingItems = await prisma.menu.findMany({
-      include: {
-        details: {
-          select: {
-            quantity: true
-          }
-        }
-      },
-      orderBy: {
-        details: {
-          _sum: {
-            quantity: 'desc'
-          }
-        }
-      },
-      take: 5
-    });
-
-    res.json({
-      totalSales: totalSales._sum.total || 0,
-      salesByCategory,
-      topSellingItems
-    });
+    res.json(transactions);
   } catch (err) {
     next(err);
   }
