@@ -79,23 +79,23 @@ router.post('/transactions/payment-confirmation', async (req, res, next) => {
 
     const transactionId = parseInt(order_id.replace('ORDER-', ''));
     let status;
-
+    console.log(`Processing transaction ID: ${transactionId}, Status: ${transaction_status}`);
     switch (transaction_status) {
-      case 'settlement':
-        status = 'paid';
+      case 'Settlement':
+        status = 'Paid';
         // Also update delivery_status to 'On Process' when paid
         await prisma.transaksi.update({
           where: { id: transactionId },
           data: { delivery_status: 'On Process' }
         });
         break;
-      case 'cancel':
-      case 'deny':
-      case 'expire':
-        status = 'cancelled';
+      case 'Cancel':
+      case 'Deny':
+      case 'Expire':
+        status = 'Cancelled';
         break;
-      case 'pending':
-        status = 'pending';
+      case 'Pending':
+        status = 'Pending';
         break;
       default:
         return res.status(400).send('Unknown transaction status.');

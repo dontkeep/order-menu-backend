@@ -1,2 +1,2 @@
 -- AlterTable
-ALTER TABLE `transaksi` ADD COLUMN `delivery_status` VARCHAR(191) NOT NULL DEFAULT 'pending';
+ALTER TABLE `Transaksi` ADD COLUMN `delivery_status` VARCHAR(191) NOT NULL DEFAULT 'pending';

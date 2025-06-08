@@ -5,4 +5,4 @@
 
 */
 -- AlterTable
-ALTER TABLE `transaksi` DROP COLUMN `delivery_charge`;
+ALTER TABLE `Transaksi` DROP COLUMN `delivery_charge`;

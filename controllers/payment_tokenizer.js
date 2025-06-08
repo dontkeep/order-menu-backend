@@ -7,6 +7,7 @@ const prisma = new PrismaClient();
 const { verifyUserFromToken } = require("./payment_token_verifier.js");
 
 const MIDTRANS_API_URL = "https://app.sandbox.midtrans.com/snap/v1/transactions";
+// const MIDTRANS_API_URL = "https://app.midtrans.com/snap/v1/transactions";
 
 // async function tokenizer(req, res)  {
 //   const MIDTRANS_SERVER_KEY = process.env.SECRET;

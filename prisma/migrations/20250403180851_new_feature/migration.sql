@@ -12,13 +12,13 @@
 
 */
 -- DropForeignKey
-ALTER TABLE `cart` DROP FOREIGN KEY `Cart_id_menu_fkey`;
+ALTER TABLE `Cart` DROP FOREIGN KEY `Cart_id_menu_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `cart` DROP FOREIGN KEY `Cart_id_user_fkey`;
+ALTER TABLE `Cart` DROP FOREIGN KEY `Cart_id_user_fkey`;
 
 -- AlterTable
-ALTER TABLE `cart` DROP PRIMARY KEY,
+ALTER TABLE `Cart` DROP PRIMARY KEY,
     DROP COLUMN `created_at`,
     DROP COLUMN `id_menu`,
     DROP COLUMN `id_user`,
@@ -28,7 +28,7 @@ ALTER TABLE `cart` DROP PRIMARY KEY,
     ADD PRIMARY KEY (`id`);
 
 -- AlterTable
-ALTER TABLE `menu` ADD COLUMN `stock` INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE `Menu` ADD COLUMN `stock` INTEGER NOT NULL DEFAULT 0;
 
 -- CreateIndex
 CREATE UNIQUE INDEX `Cart_user_id_menu_id_key` ON `Cart`(`user_id`, `menu_id`);

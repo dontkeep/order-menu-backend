@@ -17,11 +17,57 @@ const profileRoutes = require('./routes/profile');
 
 dotenv.config();
 
+
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Middleware
-app.use(cors());
+// const corsOptions = {
+//   origin: '*', // Your frontend dev URL
+//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+//   allowedHeaders: ['Content-Type', 'Authorization'],
+//   credentials: true,
+// };
+
+
+// app.use(cors({
+//   origin: '*',
+//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+//   allowedHeaders: ['Content-Type', 'Authorization'],
+// }));
+
+// app.use(cors({
+//   origin: 'http://:192.168.1.7:5173', // Replace with your frontend URL
+//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+//   allowedHeaders: ['Content-Type', 'Authorization'],
+//   credentials: true
+// }));
+
+// In your backend server configuration
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://192.168.1.7:5173',
+  'https://equal-kodiak-optionally.ngrok-free.app',
+  // Add other origins as needed
+  "*"
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
+
+app.options('*', (req, res) => {
+  res.sendStatus(204);
+});
+
 app.use(express.json());
 
 // Serve static files from the 'uploads' directory
