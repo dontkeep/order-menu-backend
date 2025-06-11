@@ -42,6 +42,36 @@ router.get('/users', verifyToken, checkRole(1), async (req, res, next) => {
   }
 });
 
+// route to update a user's password
+router.put('/users/:id', verifyToken, checkRole(1), async (req, res, next) => {
+  const { id } = req.params;
+  const { password } = req.body;
+
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10); // Hash the password before saving
+    const updatedUser = await prisma.user.update({
+      where: { id: parseInt(id) },
+      data: { hashedPassword } // Assuming password is hashed before this
+    });
+    res.json(updatedUser);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// route to delete a user
+router.delete('/users/:id', verifyToken, checkRole(1), async (req, res, next) => {
+  const { id } = req.params;
+  try {
+    await prisma.user.delete({
+      where: { id: parseInt(id) }
+    });
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+});
+
 // Route to get dashboard statistics
 router.get("/statistik", verifyToken, checkRole(1), async (req, res, next) => {
   try {
@@ -163,5 +193,53 @@ router.get("/stock-statistics", verifyToken, checkRole(1), async (req, res, next
     next(err);
   }
 });
+
+router.post('/add-user', verifyToken, checkRole(1), async (req, res, next) => {
+  const { first_name, last_name, email, password, phone_number, address_detail, province, city, regency, district, role_id } = req.body;
+
+  try {
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser) return res.status(400).send('User already exists');
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = await prisma.user.create({
+      data: {
+        first_name,
+        last_name,
+        email,
+        password: hashedPassword,
+        phone_number,
+        address_detail,
+        province,
+        city,
+        regency,
+        district,
+        role_id
+      }
+    });
+    res.status(201).json(newUser);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/get-employees', verifyToken, checkRole(1), async (req, res, next) => {
+  try {
+    const employees = await prisma.user.findMany({
+      where: { role_id: 2 }, // Assuming role_id 2 is for employees
+      select: {
+        id: true,
+        first_name: true,
+        last_name: true,
+        email: true,
+        phone_number: true
+      }
+    });
+    res.json(employees);
+  } catch (err) {
+    next(err);
+  }
+}); 
+
 
 module.exports = router;

@@ -21,32 +21,10 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 3000;
 
-// const corsOptions = {
-//   origin: '*', // Your frontend dev URL
-//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-//   allowedHeaders: ['Content-Type', 'Authorization'],
-//   credentials: true,
-// };
-
-
-// app.use(cors({
-//   origin: '*',
-//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-//   allowedHeaders: ['Content-Type', 'Authorization'],
-// }));
-
-// app.use(cors({
-//   origin: 'http://:192.168.1.7:5173', // Replace with your frontend URL
-//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-//   allowedHeaders: ['Content-Type', 'Authorization'],
-//   credentials: true
-// }));
-
 // In your backend server configuration
 const allowedOrigins = [
   'http://localhost:5173',
   'http://192.168.1.7:5173',
-  'https://equal-kodiak-optionally.ngrok-free.app',
   // Add other origins as needed
   "*"
 ];

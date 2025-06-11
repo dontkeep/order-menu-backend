@@ -17,10 +17,19 @@ router.get('/transactions', verifyToken, async (req, res, next) => {
   }
 });
 
-// Route for admins to view all transaction histories
-router.get('/transactions/all', verifyToken, checkRole(1), async (req, res, next) => {
+// Route for admins to view all transaction histories, with optional month filter
+router.get('/transactions/all', verifyToken, checkRole(1 || 2), async (req, res, next) => {
   try {
+    let where = {};
+    const { month, year } = req.query;
+    if (month && year) {
+      // month: 1-12, year: 4-digit
+      const start = new Date(year, month - 1, 1);
+      const end = new Date(year, month, 1);
+      where.created_at = { gte: start, lt: end };
+    }
     const transactions = await prisma.transaksi.findMany({
+      where,
       include: { details: true, user: true }
     });
     res.json(transactions);
@@ -36,10 +45,25 @@ router.get('/transactions/:id', verifyToken, async (req, res, next) => {
   try {
     const transaction = await prisma.transaksi.findUnique({
       where: { id: parseInt(id) },
-      include: { details: true, user: true }
+      include: {
+        details: {
+          include: {
+            menu: {
+              select: { name: true }
+            }
+          }
+        },
+        user: true
+      }
     });
 
     if (!transaction) return res.status(404).send('Transaction not found');
+
+    // Only allow if admin or the transaction belongs to the user
+    if (req.user.role_id !== 1 && req.user.role_id !== 2 && transaction.user_id !== req.user.id) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
     res.json(transaction);
   } catch (err) {
     next(err);
