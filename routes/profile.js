@@ -71,7 +71,8 @@ router.put('/', async (req, res) => {
       province, 
       city, 
       regency, 
-      district 
+      district,
+      password
     } = req.body;
 
     // Validate required fields
@@ -90,7 +91,8 @@ router.put('/', async (req, res) => {
         province,
         city,
         regency,
-        district
+        district,
+        password: password ? await bcrypt.hash(password, 10) : undefined 
       },
       select: {
         id: true,
