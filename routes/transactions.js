@@ -3,6 +3,9 @@ const { verifyToken, checkRole } = require('../controllers/authController');
 const { PrismaClient } = require('@prisma/client'); // Import Prisma Client
 const prisma = new PrismaClient(); // Initialize Prisma Client
 const router = express.Router();
+const multer = require('multer');
+const fs = require('fs');
+const path = require('path');
 
 // Route for users to view their transaction history
 router.get('/transactions', verifyToken, async (req, res, next) => {
@@ -17,10 +20,10 @@ router.get('/transactions', verifyToken, async (req, res, next) => {
   }
 });
 
-// Route for admins to view all transaction histories, with optional month, year, and day filter
+// Route for admins to view all Paid transaction histories, with optional month, year, and day filter
 router.get('/transactions/all', verifyToken, checkRole(1 || 2), async (req, res, next) => {
   try {
-    let where = {};
+    let where = { status: 'Paid' };
     const { month, year, day } = req.query;
     if (month && year && day) {
       // Filter by specific day
@@ -213,6 +216,118 @@ router.put('/transactions/auto-complete', verifyToken, checkRole(1), async (req,
     res.json({ message: `${updated.length} transaction(s) auto-completed.`, transactions: updated });
   } catch (err) {
     next(err);
+  }
+});
+
+// POST /transactions/:id/bukti-pembayaran (upload payment proof image)
+router.post('/transactions/:id/bukti-pembayaran', verifyToken, multer({ dest: 'uploads/' }).single('bukti_pembayaran'), async (req, res, next) => {
+  const { id } = req.params;
+  if (!req.file) return res.status(400).json({ error: 'Image is required' });
+  try {
+    // Only allow if the transaction belongs to the user
+    const transaksi = await prisma.transaksi.findUnique({ where: { id: parseInt(id) } });
+    if (!transaksi || transaksi.user_id !== req.user.id) {
+      // Optionally, delete the uploaded file if not authorized
+      fs.unlinkSync(req.file.path);
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+    const updated = await prisma.transaksi.update({
+      where: { id: parseInt(id) },
+      data: { 'payment-proof': req.file.filename, status: 'Paid' }
+    });
+    res.json(updated);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /paid-transactions (all except Pending)
+router.get('/paid-transactions', verifyToken, async (req, res, next) => {
+  try {
+    const transactions = await prisma.transaksi.findMany({
+      where: {
+        user_id: req.user.id,
+        NOT: { status: 'Pending' }
+      },
+      include: { details: true }
+    });
+    res.json(transactions);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// PUT /transactions/:id/admin-accept (admin sets status to OnProgress)
+router.put('/transactions/:id/admin-accept', verifyToken, checkRole(1), async (req, res, next) => {
+  const { id } = req.params;
+  try {
+    const updated = await prisma.transaksi.update({
+      where: { id: parseInt(id) },
+      data: { status: 'OnProgress' }
+    });
+    res.json(updated);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// PUT /transactions/:id/admin-reject (admin sets status to Rejected)
+router.put('/transactions/:id/admin-reject', verifyToken, checkRole(1), async (req, res, next) => {
+  const { id } = req.params;
+  try {
+    const updated = await prisma.transaksi.update({
+      where: { id: parseInt(id) },
+      data: { status: 'Rejected' }
+    });
+    res.json(updated);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// PUT /transactions/:id/user-accept (user sets status to Completed)
+router.put('/transactions/:id/user-accept', verifyToken, async (req, res, next) => {
+  const { id } = req.params;
+  try {
+    const transaksi = await prisma.transaksi.findUnique({ where: { id: parseInt(id) } });
+    if (!transaksi || transaksi.user_id !== req.user.id) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+    const updated = await prisma.transaksi.update({
+      where: { id: parseInt(id) },
+      data: { status: 'Completed' }
+    });
+    res.json(updated);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// PUT /transactions/:id/user-reject (user sets status to User-Rejected)
+router.put('/transactions/:id/user-reject', verifyToken, async (req, res, next) => {
+  const { id } = req.params;
+  try {
+    const transaksi = await prisma.transaksi.findUnique({ where: { id: parseInt(id) } });
+    if (!transaksi || transaksi.user_id !== req.user.id) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+    const updated = await prisma.transaksi.update({
+      where: { id: parseInt(id) },
+      data: { status: 'User-Rejected' }
+    });
+    res.json(updated);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /qris-image (serve static QRIS image)
+router.get('/qris-image', (req, res) => {
+  const qrisPath = path.join(__dirname, '../uploads/qris.png');
+  if (fs.existsSync(qrisPath)) {
+    res.sendFile(qrisPath);
+  } else {
+    res.status(404).json({ error: 'QRIS image not found' });
   }
 });
 
