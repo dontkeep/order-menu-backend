@@ -20,18 +20,24 @@ router.get('/transactions', verifyToken, async (req, res, next) => {
   }
 });
 
-// Route for admins to view all Paid transaction histories, with optional month, year, and day filter
+// Route for admins to view all transaction histories by status, with optional month, year, and day filter
 router.get('/transactions/all', verifyToken, checkRole(1 || 2), async (req, res, next) => {
   try {
-    let where = { status: 'Paid' };
-    const { month, year, day } = req.query;
+    const { month, year, day, status } = req.query;
+    let where = {};
+    // Allow filtering by multiple statuses (comma separated)
+    if (status) {
+      const statusArr = status.split(',');
+      where.status = { in: statusArr };
+    } else {
+      // Default: show all statuses
+      where.status = { in: ['Paid', 'OnProgress', 'Rejected', 'Accepted', 'Completed'] };
+    }
     if (month && year && day) {
-      // Filter by specific day
       const start = new Date(year, month - 1, day);
       const end = new Date(year, month - 1, parseInt(day) + 1);
       where.created_at = { gte: start, lt: end };
     } else if (month && year) {
-      // Filter by month
       const start = new Date(year, month - 1, 1);
       const end = new Date(year, month, 1);
       where.created_at = { gte: start, lt: end };
