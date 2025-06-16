@@ -239,7 +239,7 @@ router.post('/transactions/:id/bukti-pembayaran', verifyToken, multer({ dest: 'u
     }
     const updated = await prisma.transaksi.update({
       where: { id: parseInt(id) },
-      data: { 'payment-proof': req.file.filename, status: 'Paid' }
+      data: { 'payment_proof': req.file.filename, status: 'Paid' }
     });
     res.json(updated);
   } catch (err) {

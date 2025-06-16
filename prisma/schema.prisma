@@ -81,7 +81,7 @@ model Transaksi {
   status          String   @default("pending")
   created_at      DateTime @default(now())
   user            User     @relation(fields: [user_id], references: [id])
-  payment-proof   String 
+  payment_proof   String 
   details         Transaksi_Detail[]
 }
 
