@@ -241,5 +241,60 @@ router.get('/get-employees', verifyToken, checkRole(1), async (req, res, next) =
   }
 }); 
 
+// Get daily transaction totals for last 30 days
+router.get('/get-graphic-data', verifyToken, checkRole(1 || 2), async (req, res, next) => {
+  try {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const transactions = await prisma.transaksi.findMany({
+      where: {
+        created_at: {
+          gte: thirtyDaysAgo
+        },
+        status: {
+          in: ['Paid', 'OnProgress', 'Completed']  // Only count confirmed transactions
+        }
+      },
+      select: {
+        created_at: true,
+        total: true
+      }
+    });
+
+    // Create a map for all 30 days with 0 as default value
+    const dailyTotals = new Map();
+    for (let i = 0; i < 30; i++) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      date.setHours(0, 0, 0, 0);
+      dailyTotals.set(date.toISOString().split('T')[0], 0);
+    }
+
+    // Sum up totals for each day
+    transactions.forEach(transaction => {
+      const dateStr = transaction.created_at.toISOString().split('T')[0];
+      const currentTotal = dailyTotals.get(dateStr) || 0;
+      dailyTotals.set(dateStr, currentTotal + transaction.total);
+    });
+
+    // Convert to required format
+    const formattedData = Array.from(dailyTotals.entries())
+      .map(([dateStr, value]) => {
+        const date = new Date(dateStr);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = date.toLocaleString('en-US', { month: 'short' });
+        return {
+          date: `${day} ${month}`,
+          value: Math.round(value)  // Round to whole number
+        };
+      })
+      .reverse();  // Most recent last
+
+    res.json(formattedData);
+  } catch (err) {
+    next(err);
+  }
+});
 
 module.exports = router;
