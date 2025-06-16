@@ -2,6 +2,7 @@ const express = require('express');
 const { verifyToken, checkRole } = require('../controllers/authController');
 const { PrismaClient } = require('@prisma/client'); // Correct Prisma Client import
 const prisma = new PrismaClient(); // Initialize Prisma Client
+const bcrypt = require('bcrypt');
 const router = express.Router();
 
 // Route to get admin dashboard data
@@ -241,5 +242,28 @@ router.get('/get-employees', verifyToken, checkRole(1), async (req, res, next) =
   }
 }); 
 
+router.put('/users/:id/password', verifyToken, checkRole(1), async (req, res, next) => {
+  const { id } = req.params;
+  const { password } = req.body;
+
+  try {
+    if (!password) {
+      return res.status(400).json({ error: 'Password is required' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const updatedUser = await prisma.user.update({
+      where: { id: parseInt(id) },
+      data: { password: hashedPassword },
+      select: {
+        id: true,
+        email: true
+      }
+    });
+    res.json({ message: 'Password updated successfully', user: updatedUser });
+  } catch (err) {
+    next(err);
+  }
+});
 
 module.exports = router;
