@@ -4,6 +4,7 @@ const { verifyUserFromToken } = require('../controllers/payment_token_verifier')
 
 const prisma = new PrismaClient();
 const router = express.Router();
+const bcrypt = require('bcrypt');
 
 router.get('/', async (req, res) => {
   try {
@@ -72,12 +73,40 @@ router.put('/', async (req, res) => {
       city, 
       regency, 
       district,
-      password
+      current_password,
+      new_password,
+      confirm_password
     } = req.body;
 
     // Validate required fields
     if (!first_name || !last_name) {
       return res.status(400).json({ error: 'First name and last name are required' });
+    }
+
+    // Handle password change if requested
+    let passwordUpdate = {};
+    if (current_password || new_password || confirm_password) {
+      if (!current_password || !new_password || !confirm_password) {
+        return res.status(400).json({ error: 'All password fields are required for password change' });
+      }
+
+      if (new_password !== confirm_password) {
+        return res.status(400).json({ error: 'New password and confirmation do not match' });
+      }
+
+      // Verify current password
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { password: true }
+      });
+
+      const isPasswordValid = await bcrypt.compare(current_password, user.password);
+      if (!isPasswordValid) {
+        return res.status(400).json({ error: 'Current password is incorrect' });
+      }
+
+      // Hash the new password
+      passwordUpdate.password = await bcrypt.hash(new_password, 10);
     }
 
     // Update user data
@@ -92,7 +121,7 @@ router.put('/', async (req, res) => {
         city,
         regency,
         district,
-        password: password ? await bcrypt.hash(password, 10) : undefined 
+        ...passwordUpdate
       },
       select: {
         id: true,
