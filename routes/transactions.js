@@ -72,7 +72,8 @@ router.get('/transactions/all', verifyToken, checkRole([1, 2]), async (req, res,
     }
     const transactions = await prisma.transaksi.findMany({
       where,
-      include: { details: true, user: true }
+      include: { details: true, user: true },
+      orderBy: { created_at: 'desc' }
     });
     res.json(transactions);
   } catch (err) {
