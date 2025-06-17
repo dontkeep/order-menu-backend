@@ -10,10 +10,14 @@ const router = express.Router();
 // Configure multer storage for payment proof
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/payment_proofs/'); // Store in specific folder
+    // Create directory if it doesn't exist
+    const dir = 'uploads/payment_proofs/';
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    cb(null, dir);
   },
   filename: (req, file, cb) => {
-    // Format: payment_proof_[timestamp].[ext]
     const uniqueSuffix = Date.now();
     cb(null, `payment_proof_${uniqueSuffix}${path.extname(file.originalname)}`);
   }
