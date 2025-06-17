@@ -1,11 +1,35 @@
 const express = require('express');
 const { verifyToken, checkRole } = require('../controllers/authController');
-const { PrismaClient } = require('@prisma/client'); // Import Prisma Client
-const prisma = new PrismaClient(); // Initialize Prisma Client
-const router = express.Router();
+const { PrismaClient } = require('@prisma/client');
 const multer = require('multer');
-const fs = require('fs');
 const path = require('path');
+const fs = require('fs');
+const prisma = new PrismaClient();
+const router = express.Router();
+
+// Configure multer storage for payment proof
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/payment_proofs/'); // Store in specific folder
+  },
+  filename: (req, file, cb) => {
+    // Format: payment_proof_[timestamp].[ext]
+    const uniqueSuffix = Date.now();
+    cb(null, `payment_proof_${uniqueSuffix}${path.extname(file.originalname)}`);
+  }
+});
+
+const upload = multer({ 
+  storage: storage,
+  fileFilter: (req, file, cb) => {
+    // Accept only images
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed!'), false);
+    }
+  }
+});
 
 // Route for users to view their transaction history
 router.get('/transactions', verifyToken, async (req, res, next) => {
@@ -225,24 +249,102 @@ router.put('/transactions/auto-complete', verifyToken, checkRole(1), async (req,
   }
 });
 
-// POST /transactions/:id/bukti-pembayaran (upload payment proof image)
-router.post('/transactions/:id/bukti-pembayaran', verifyToken, multer({ dest: 'uploads/' }).single('bukti_pembayaran'), async (req, res, next) => {
-  const { id } = req.params;
-  if (!req.file) return res.status(400).json({ error: 'Image is required' });
+// Create transaction with payment proof
+router.post('/transactions/bukti-pembayaran', verifyToken, upload.single('bukti_pembayaran'), async (req, res, next) => {
+  if (!req.file) return res.status(400).json({ error: 'Payment proof image is required' });
+  if (!req.body.items || !Array.isArray(req.body.items)) {
+    // Clean up uploaded file if body is invalid
+    fs.unlinkSync(req.file.path);
+    return res.status(400).json({ error: 'Menu items array is required' });
+  }
+
   try {
-    // Only allow if the transaction belongs to the user
-    const transaksi = await prisma.transaksi.findUnique({ where: { id: parseInt(id) } });
-    if (!transaksi || transaksi.user_id !== req.user.id) {
-      // Optionally, delete the uploaded file if not authorized
-      fs.unlinkSync(req.file.path);
-      return res.status(403).json({ error: 'Unauthorized' });
-    }
-    const updated = await prisma.transaksi.update({
-      where: { id: parseInt(id) },
-      data: { 'payment_proof': req.file.filename, status: 'Paid' }
+    // Get user details from token
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: {
+        address_detail: true,
+        phone_number: true,
+        province: true,
+        city: true,
+        regency: true,
+        district: true
+      }
     });
-    res.json(updated);
+
+    // Calculate total and validate items
+    let total = 0;
+    const itemDetails = [];
+    
+    for (const item of req.body.items) {
+      const menu = await prisma.menu.findUnique({
+        where: { id: parseInt(item.menu_id) },
+        select: { price: true }
+      });
+
+      if (!menu) {
+        // Clean up uploaded file if menu not found
+        fs.unlinkSync(req.file.path);
+        return res.status(400).json({ error: `Menu with ID ${item.menu_id} not found` });
+      }
+
+      itemDetails.push({
+        menu_id: parseInt(item.menu_id),
+        quantity: parseInt(item.quantity),
+        price: menu.price
+      });
+      
+      total += menu.price * parseInt(item.quantity);
+    }
+
+    // Get delivery charge from menu
+    const deliveryChargeItem = await prisma.menu.findFirst({
+      where: { name: "Delivery Charge" },
+      select: { price: true }
+    });
+
+    if (!deliveryChargeItem) {
+      fs.unlinkSync(req.file.path);
+      return res.status(500).json({ error: "Delivery charge not configured" });
+    }
+
+    // Add delivery charge to total
+    total += deliveryChargeItem.price;
+
+    // Create transaction with details
+    const transaction = await prisma.transaksi.create({
+      data: {
+        user_id: req.user.id,
+        address: `${user.address_detail}, ${user.district}, ${user.regency}, ${user.city}, ${user.province}`,
+        phone_number: user.phone_number,
+        delivery_charge: deliveryChargeItem.price,
+        total: total,
+        status: "OnProcess",
+        payment_proof: req.file.filename,
+        details: {
+          create: itemDetails
+        }
+      },
+      include: {
+        details: {
+          include: {
+            menu: {
+              select: {
+                name: true,
+                price: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    res.status(201).json(transaction);
   } catch (err) {
+    // Clean up uploaded file if transaction creation fails
+    if (req.file) {
+      fs.unlinkSync(req.file.path);
+    }
     next(err);
   }
 });
@@ -324,16 +426,6 @@ router.put('/transactions/:id/user-reject', verifyToken, async (req, res, next) 
     res.json(updated);
   } catch (err) {
     next(err);
-  }
-});
-
-// GET /qris-image (serve static QRIS image)
-router.get('/qris-image', (req, res) => {
-  const qrisPath = path.join(__dirname, '../uploads/qris.png');
-  if (fs.existsSync(qrisPath)) {
-    res.sendFile(qrisPath);
-  } else {
-    res.status(404).json({ error: 'QRIS image not found' });
   }
 });
 
