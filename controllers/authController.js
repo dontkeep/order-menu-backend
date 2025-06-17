@@ -118,9 +118,8 @@ const verifyToken = (req, res, next) => {
   });
 };
 
-const checkRole = (requiredRole) => (req, res, next) => {
-  console.log(`User role_id: ${req.user.role_id}, Required role_id: ${requiredRole}`); // Debug log
-  if (req.user.role_id !== requiredRole) {
+const checkRole = (roles) => (req, res, next) => {
+  if (!roles.includes(req.user.role_id)) {
     return res.status(403).send('Access denied.');
   }
   next();
@@ -131,5 +130,5 @@ module.exports = {
   login,
   logout,
   verifyToken,
-  checkRole // Ensure checkRole is exported
+  checkRole // Ensure checkRoles is exported
 };

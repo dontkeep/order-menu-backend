@@ -49,7 +49,7 @@ router.get('/transactions', verifyToken, async (req, res, next) => {
 });
 
 // Route for admins to view all transaction histories by status, with optional month, year, and day filter
-router.get('/transactions/all', verifyToken, checkRole(1 || 2), async (req, res, next) => {
+router.get('/transactions/all', verifyToken, checkRole([1, 2]), async (req, res, next) => {
   try {
     const { month, year, day, status } = req.query;
     let where = {};
