@@ -155,7 +155,7 @@ router.put('/', async (req, res) => {
 
 router.get('/districts', async (req, res) => {
   try {
-    const districts = await prisma.district.findMany({
+    const districts = await prisma.ongkir.findMany({
       select: {
         id: true,
         name: true,
