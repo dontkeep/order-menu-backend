@@ -19,7 +19,7 @@ router.get('/', async (req, res) => {
       return res.status(401).json({ error: 'Invalid or expired token' });
     }
 
-    // Fetch the user data from the database
+    // Fetch the user data from the database, including district object
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -32,8 +32,15 @@ router.get('/', async (req, res) => {
         province: true,
         city: true,
         regency: true,
-        district: true,
         district_id: true,
+        district: {
+          select: {
+            id: true,
+            district_name: true,
+            district_post_kode: true,
+            price: true
+          }
+        },
         role_id: true
       }
     });
@@ -65,15 +72,15 @@ router.put('/', async (req, res) => {
     }
 
     // Extract update data from request body
-    const { 
-      first_name, 
-      last_name, 
-      phone_number, 
-      address_detail, 
-      province, 
-      city, 
-      regency, 
-      district,
+    const {
+      first_name,
+      last_name,
+      phone_number,
+      address_detail,
+      province,
+      city,
+      regency,
+      district_id,
       current_password,
       new_password,
       confirm_password
@@ -121,7 +128,7 @@ router.put('/', async (req, res) => {
         province,
         city,
         regency,
-        district,
+        district_id,
         ...passwordUpdate
       },
       select: {
@@ -134,7 +141,15 @@ router.put('/', async (req, res) => {
         province: true,
         city: true,
         regency: true,
-        district: true
+        district_id: true,
+        district: {
+          select: {
+            id: true,
+            district_name: true,
+            district_post_kode: true,
+            price: true
+          }
+        }
       }
     });
 
@@ -144,11 +159,11 @@ router.put('/', async (req, res) => {
     });
   } catch (error) {
     console.error('Error updating user profile:', error);
-    
+
     if (error.code === 'P2025') {
       return res.status(404).json({ error: 'User not found' });
     }
-    
+
     res.status(500).json({ error: 'Failed to update user profile' });
   }
 });
