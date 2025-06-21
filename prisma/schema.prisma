@@ -77,7 +77,6 @@ model Transaksi {
   phone_number    String
   delivery_charge Float    @default(0.00)
   total           Float
-  delivery_status String   @default("pending")
   status          String   @default("pending")
   created_at      DateTime @default(now())
   user            User     @relation(fields: [user_id], references: [id])
