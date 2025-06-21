@@ -277,7 +277,7 @@ router.get('/get-graphic-data', verifyToken, checkRole(1 || 2), async (req, res,
           gte: thirtyDaysAgo
         },
         status: {
-          in: ['Paid', 'OnProgress', 'Completed']  // Only count confirmed transactions
+          in: ['Accepted', 'Accepted-User']  // Only count confirmed transactions
         }
       },
       select: {
