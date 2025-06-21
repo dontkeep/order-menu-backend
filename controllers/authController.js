@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 
 const register = async (req, res, next) => {
   try {
-    const { first_name, last_name, email, password, phone_number, address_detail, district, role_id } = req.body;
+    const { first_name, last_name, email, password, phone_number, address_detail, district_id, role_id } = req.body;
     
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -27,7 +27,7 @@ const register = async (req, res, next) => {
         province: "Jawa Barat",
         city: "Purwakarta",
         regency: "Purwakarta",
-        district,
+        district_id,
         role_id
       }
     });
