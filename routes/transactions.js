@@ -58,8 +58,7 @@ router.get('/transactions/all', verifyToken, checkRoles([1, 2]), async (req, res
       const statusArr = status.split(',');
       where.status = { in: statusArr };
     } else {
-      // Default: show all statuses
-      where.status = { in: ['Paid', 'OnProcess', 'Rejected', 'Accepted', 'Completed'] };
+      where.status = { not: '*' };
     }
     if (month && year && day) {
       const start = new Date(year, month - 1, day);
