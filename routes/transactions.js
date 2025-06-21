@@ -375,7 +375,7 @@ router.put('/transactions/:id/admin-accept', verifyToken, checkRole(1), async (r
   try {
     const updated = await prisma.transaksi.update({
       where: { id: parseInt(id) },
-      data: { status: 'OnProgress' }
+      data: { status: 'Accepted' }
     });
     res.json(updated);
   } catch (err) {
@@ -407,7 +407,7 @@ router.put('/transactions/:id/user-accept', verifyToken, async (req, res, next) 
     }
     const updated = await prisma.transaksi.update({
       where: { id: parseInt(id) },
-      data: { status: 'Completed' }
+      data: { status: 'Accepted-User' }
     });
     res.json(updated);
   } catch (err) {
@@ -425,7 +425,7 @@ router.put('/transactions/:id/user-reject', verifyToken, async (req, res, next) 
     }
     const updated = await prisma.transaksi.update({
       where: { id: parseInt(id) },
-      data: { status: 'User-Rejected' }
+      data: { status: 'Rejected-User' }
     });
     res.json(updated);
   } catch (err) {
