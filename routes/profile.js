@@ -158,8 +158,9 @@ router.get('/districts', async (req, res) => {
     const districts = await prisma.ongkir.findMany({
       select: {
         id: true,
-        name: true,
-        regency_id: true
+        district_name: true,
+        district_post_kode: true,
+        price: true,
       }
     });
     res.json(districts);
