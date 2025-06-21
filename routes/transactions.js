@@ -371,7 +371,7 @@ router.get('/paid-transactions', verifyToken, async (req, res, next) => {
 });
 
 // PUT /transactions/:id/admin-accept (admin sets status to OnProgress)
-router.put('/transactions/:id/admin-accept', verifyToken, checkRole(1), async (req, res, next) => {
+router.put('/transactions/:id/admin-accept', verifyToken, checkRoles([1,2]), async (req, res, next) => {
   const { id } = req.params;
   try {
     const updated = await prisma.transaksi.update({
@@ -385,7 +385,7 @@ router.put('/transactions/:id/admin-accept', verifyToken, checkRole(1), async (r
 });
 
 // PUT /transactions/:id/admin-reject (admin sets status to Rejected)
-router.put('/transactions/:id/admin-reject', verifyToken, checkRole(1), async (req, res, next) => {
+router.put('/transactions/:id/admin-reject', verifyToken, checkRoles([1,2]), async (req, res, next) => {
   const { id } = req.params;
   try {
     const updated = await prisma.transaksi.update({
