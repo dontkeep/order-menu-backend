@@ -1,5 +1,5 @@
 const express = require('express');
-const { verifyToken, checkRole } = require('../controllers/authController');
+const { verifyToken, checkRole, checkRoles } = require('../controllers/authController');
 const { PrismaClient } = require('@prisma/client');
 const multer = require('multer');
 const path = require('path');
@@ -49,7 +49,7 @@ router.get('/transactions', verifyToken, async (req, res, next) => {
 });
 
 // Route for admins to view all transaction histories by status, with optional month, year, and day filter
-router.get('/transactions/all', verifyToken, checkRole([1, 2]), async (req, res, next) => {
+router.get('/transactions/all', verifyToken, checkRoles([1, 2]), async (req, res, next) => {
   try {
     const { month, year, day, status } = req.query;
     let where = {};
@@ -72,7 +72,8 @@ router.get('/transactions/all', verifyToken, checkRole([1, 2]), async (req, res,
     }
     const transactions = await prisma.transaksi.findMany({
       where,
-      include: { details: true, user: true }
+      include: { details: true, user: true },
+      orderBy: { created_at: 'desc' }
     });
     res.json(transactions);
   } catch (err) {

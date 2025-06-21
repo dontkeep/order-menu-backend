@@ -74,21 +74,30 @@ app.use((req, res, next) => {
 // Function to create initial accounts and categories
 const createInitialAccounts = async () => {
   try {
-    // ======= Admin and User Account Creation =======
+    // ======= Admin, Pegawai, and User Account Creation =======
     const adminEmail = 'admin@example.com';
     const adminPassword = 'admin123';
+
+    const employeeEmail = 'pegawai@example.com';
+    const employeePassword = 'pegawai123';
 
     const userEmail = 'user@example.com';
     const userPassword = 'user123';
 
+    // Check existing accounts
     const existingAdmin = await prisma.user.findFirst({
       where: { email: adminEmail }
+    });
+
+    const existingEmployee = await prisma.user.findFirst({
+      where: { email: employeeEmail }
     });
 
     const existingUser = await prisma.user.findFirst({
       where: { email: userEmail }
     });
 
+    // Create admin if not exists
     if (!existingAdmin) {
       const hashedPassword = await bcrypt.hash(adminPassword, 10);
       await prisma.user.create({
@@ -111,6 +120,30 @@ const createInitialAccounts = async () => {
       console.log('Admin user already exists.');
     }
 
+    // Create employee if not exists
+    if (!existingEmployee) {
+      const hashedPassword = await bcrypt.hash(employeePassword, 10);
+      await prisma.user.create({
+        data: {
+          first_name: 'Pegawai',
+          last_name: 'Restoran',
+          email: employeeEmail,
+          password: hashedPassword,
+          phone_number: '1122334455',
+          address_detail: 'Employee Address',
+          province: 'Employee Province',
+          city: 'Employee City',
+          regency: 'Employee Regency',
+          district: 'Employee District',
+          role_id: 2 // Pegawai
+        }
+      });
+      console.log(`✅ Employee created: ${employeeEmail} / ${employeePassword}`);
+    } else {
+      console.log('Employee already exists.');
+    }
+
+    // Create user if not exists
     if (!existingUser) {
       const hashedPassword = await bcrypt.hash(userPassword, 10);
       await prisma.user.create({
