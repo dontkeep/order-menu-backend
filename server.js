@@ -112,7 +112,7 @@ const createInitialAccounts = async () => {
           province: 'Admin Province',
           city: 'Admin City',
           regency: 'Admin Regency',
-          district: 'Admin District',
+          district_id: 1,
           role_id: 1 // Admin
         }
       });
@@ -135,7 +135,7 @@ const createInitialAccounts = async () => {
           province: 'Employee Province',
           city: 'Employee City',
           regency: 'Employee Regency',
-          district: 'Employee District',
+          district_id: 1,
           role_id: 2 // Pegawai
         }
       });
@@ -158,7 +158,7 @@ const createInitialAccounts = async () => {
           province: 'User Province',
           city: 'User City',
           regency: 'User Regency',
-          district: 'User District',
+          district_id: 1,
           role_id: 3 // Pelanggan
         }
       });

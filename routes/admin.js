@@ -266,7 +266,7 @@ router.put('/users/:id/password', verifyToken, checkRole(1), async (req, res, ne
   }
 });
 // Get daily transaction totals for last 30 days
-router.get('/get-graphic-data', verifyToken, checkRole(1 || 2), async (req, res, next) => {
+router.get('/get-graphic-data', verifyToken, checkRole(1), async (req, res, next) => {
   try {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -286,9 +286,9 @@ router.get('/get-graphic-data', verifyToken, checkRole(1 || 2), async (req, res,
       }
     });
 
-    // Create a map for all 30 days with 0 as default value
+    // Create a map for all 30 days with 0 as default value (oldest to newest)
     const dailyTotals = new Map();
-    for (let i = 0; i < 30; i++) {
+    for (let i = 29; i >= 0; i--) {
       const date = new Date();
       date.setDate(date.getDate() - i);
       date.setHours(0, 0, 0, 0);
@@ -302,7 +302,7 @@ router.get('/get-graphic-data', verifyToken, checkRole(1 || 2), async (req, res,
       dailyTotals.set(dateStr, currentTotal + transaction.total);
     });
 
-    // Convert to required format
+    // Convert to required format (no .reverse())
     const formattedData = Array.from(dailyTotals.entries())
       .map(([dateStr, value]) => {
         const date = new Date(dateStr);
@@ -312,8 +312,7 @@ router.get('/get-graphic-data', verifyToken, checkRole(1 || 2), async (req, res,
           date: `${day} ${month}`,
           value: Math.round(value)  // Round to whole number
         };
-      })
-      .reverse();  // Most recent last
+      });
 
     res.json(formattedData);
   } catch (err) {
