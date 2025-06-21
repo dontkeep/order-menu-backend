@@ -1,44 +1,33 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-async function seed() {
-  try {
-    const existingCategory = await prisma.kategori.findUnique({
-      where: { id: 1 }
-    });
+async function main() {
+  // Remove all existing Ongkir data
+  await prisma.ongkir.deleteMany();
 
-    if (!existingCategory) {
-      console.error("❌ Error: Category with id: 2 does not exist. Please create it first.");
-      return;
-    }
-    
-    // Check if the delivery charge item already exists
-    const existingItem = await prisma.menu.findUnique({
-      where: { id: 0 }
-    });
+  // Helper to add a range of postal codes for a district
 
-    if (!existingItem) {
-      // Create the delivery charge item
-      await prisma.menu.create({
-        data: {
-          name: "Delivery Charge",
-          price: 5000, // Fixed delivery charge
-          image: "delivery_charge.png", // Placeholder image
-          category_id: 1, // Link to the existing "Burger" category
-          stock: 1, // Stock is not relevant but required
-          description: "Fixed delivery charge for all orders"
-        }
-      });
+  // Jatiluhur: 41152-41161, 7000
+  await prisma.ongkir.create({data: {district_name: 'Jatiluhur', district_post_kode: "41152-41161", price: 7000}});
+  // Purwakarta (kota): 41111-41119, 9000
+  await prisma.ongkir.create({data: {district_name: 'Purwakarta (kota)', district_post_kode: "41111-41119", price: 7000}});
+  // Babakancikao: 41151, 12000
+  await prisma.ongkir.create({ data: { district_name: 'Babakancikao', district_post_kode: "41151", price: 12000 } });
+  // Bungursari: 41181, 20000
+  await prisma.ongkir.create({ data: { district_name: 'Bungursari', district_post_kode: "41181", price: 20000 } });
+  // Pasawahan: 41171-41172, 12000
+  await prisma.ongkir.create({data: {district_name: 'Pasawahan', district_post_kode: "41171-41172", price: 12000}});
+  // Sukatani: 41167, 9000
+  await prisma.ongkir.create({ data: { district_name: 'Sukatani', district_post_kode: "41167", price: 9000 } });
 
-      console.log("✅ Delivery charge item created successfully.");
-    } else {
-      console.log("Delivery charge item already exists.");
-    }
-  } catch (error) {
-    console.error("❌ Error seeding data:", error);
-  } finally {
-    await prisma.$disconnect();
-  }
+  console.log('Ongkir seeding complete!');
 }
 
-seed();
+main()
+  .catch(e => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

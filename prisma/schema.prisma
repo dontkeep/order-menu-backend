@@ -8,19 +8,20 @@ generator client {
 }
 
 model User {
-  id             Int       @id @default(autoincrement())
+  id             Int         @id @default(autoincrement())
   first_name     String
   last_name      String
-  email          String    @unique
+  email          String      @unique
   password       String
   phone_number   String
   address_detail String
   province       String
   city           String
   regency        String
-  district       String
+  district_id    Int
+  district       Ongkir      @relation(fields: [district_id], references: [id])
   role_id        Int
-  role           Role      @relation(fields: [role_id], references: [id])
+  role           Role        @relation(fields: [role_id], references: [id])
   sessions       Session[]
   transactions   Transaksi[]
   cart           Cart[]
@@ -39,27 +40,27 @@ model Kategori {
 }
 
 model Menu {
-  id          Int       @id @default(autoincrement())
+  id          Int                @id @default(autoincrement())
   name        String
   price       Float
   image       String
   category_id Int
-  category    Kategori  @relation(fields: [category_id], references: [id])
+  category    Kategori           @relation(fields: [category_id], references: [id])
   cart        Cart[]
   details     Transaksi_Detail[]
-  stock       Int       @default(0) // Add stock field to track inventory
-  description String? 
+  stock       Int                @default(0) // Add stock field to track inventory
+  description String?
 }
 
 model Cart {
-  id        Int      @id @default(autoincrement())
-  user_id   Int
-  menu_id   Int
-  quantity  Int
-  user      User     @relation(fields: [user_id], references: [id])
-  menu      Menu     @relation(fields: [menu_id], references: [id])
+  id       Int  @id @default(autoincrement())
+  user_id  Int
+  menu_id  Int
+  quantity Int
+  user     User @relation(fields: [user_id], references: [id])
+  menu     Menu @relation(fields: [menu_id], references: [id])
 
-  @@unique([user_id, menu_id]) // Ensure a user cannot have duplicate menu items in their cart
+  @@unique([user_id, menu_id])
 }
 
 model Session {
@@ -75,12 +76,12 @@ model Transaksi {
   user_id         Int
   address         String
   phone_number    String
-  delivery_charge Float    @default(0.00)
+  delivery_charge Float              @default(0.00)
   total           Float
-  status          String   @default("pending")
-  created_at      DateTime @default(now())
-  user            User     @relation(fields: [user_id], references: [id])
-  payment_proof   String 
+  status          String             @default("pending")
+  created_at      DateTime           @default(now())
+  user            User               @relation(fields: [user_id], references: [id])
+  payment_proof   String
   details         Transaksi_Detail[]
 }
 
@@ -92,4 +93,12 @@ model Transaksi_Detail {
   price        Float
   transaksi    Transaksi @relation(fields: [transaksi_id], references: [id])
   menu         Menu      @relation(fields: [menu_id], references: [id])
+}
+
+model Ongkir {
+  id                 Int    @id @default(autoincrement())
+  district_name      String
+  district_post_kode String
+  price              Float
+  User               User[]
 }

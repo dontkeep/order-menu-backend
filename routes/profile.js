@@ -33,6 +33,7 @@ router.get('/', async (req, res) => {
         city: true,
         regency: true,
         district: true,
+        district_id: true,
         role_id: true
       }
     });

@@ -373,6 +373,22 @@ router.get('/paid-transactions', verifyToken, async (req, res, next) => {
 router.put('/transactions/:id/admin-accept', verifyToken, checkRoles([1,2]), async (req, res, next) => {
   const { id } = req.params;
   try {
+    // Get transaction details
+    const transaksi = await prisma.transaksi.findUnique({
+      where: { id: parseInt(id) },
+      include: { details: true }
+    });
+    if (!transaksi) return res.status(404).json({ error: 'Transaction not found' });
+
+    // Update stock for each menu item
+    for (const detail of transaksi.details) {
+      await prisma.menu.update({
+        where: { id: detail.menu_id },
+        data: { stock: { decrement: detail.quantity } }
+      });
+    }
+
+    // Update transaction status
     const updated = await prisma.transaksi.update({
       where: { id: parseInt(id) },
       data: { status: 'Accepted' }
