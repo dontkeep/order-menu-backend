@@ -25,6 +25,7 @@ const port = process.env.PORT || 3000;
 const allowedOrigins = [
   'http://localhost:5173',
   'http://192.168.1.7:5173',
+  'https://rmsarinikmat.naufalad.com',
   // Add other origins as needed
   "*"
 ];

@@ -153,4 +153,20 @@ router.put('/', async (req, res) => {
   }
 });
 
+router.get('/districts', async (req, res) => {
+  try {
+    const districts = await prisma.district.findMany({
+      select: {
+        id: true,
+        name: true,
+        regency_id: true
+      }
+    });
+    res.json(districts);
+  } catch (error) {
+    console.error('Error fetching districts:', error);
+    res.status(500).json({ error: 'Failed to fetch districts' });
+  }
+});
+
 module.exports = router;
