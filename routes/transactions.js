@@ -257,10 +257,26 @@ router.put('/transactions/auto-complete', verifyToken, checkRole(1), async (req,
 // Create transaction with payment proof
 router.post('/transactions/bukti-pembayaran', verifyToken, upload.single('bukti_pembayaran'), async (req, res, next) => {
   if (!req.file) return res.status(400).json({ error: 'Payment proof image is required' });
-  if (!req.body.items || !Array.isArray(req.body.items)) {
-    // Clean up uploaded file if body is invalid
+
+  // Parse items and district_id from form-data (items should be sent as JSON string)
+  let items = req.body.items;
+  if (typeof items === 'string') {
+    try {
+      items = JSON.parse(items);
+    } catch {
+      fs.unlinkSync(req.file.path);
+      return res.status(400).json({ error: 'Menu items array is invalid JSON' });
+    }
+  }
+  if (!items || !Array.isArray(items)) {
     fs.unlinkSync(req.file.path);
     return res.status(400).json({ error: 'Menu items array is required' });
+  }
+
+  const district_id = parseInt(req.body.district_id);
+  if (!district_id) {
+    fs.unlinkSync(req.file.path);
+    return res.status(400).json({ error: 'district_id is required' });
   }
 
   try {
@@ -280,15 +296,13 @@ router.post('/transactions/bukti-pembayaran', verifyToken, upload.single('bukti_
     // Calculate total and validate items
     let total = 0;
     const itemDetails = [];
-    
-    for (const item of req.body.items) {
+    for (const item of items) {
       const menu = await prisma.menu.findUnique({
         where: { id: parseInt(item.menu_id) },
         select: { price: true }
       });
 
       if (!menu) {
-        // Clean up uploaded file if menu not found
         fs.unlinkSync(req.file.path);
         return res.status(400).json({ error: `Menu with ID ${item.menu_id} not found` });
       }
@@ -298,23 +312,22 @@ router.post('/transactions/bukti-pembayaran', verifyToken, upload.single('bukti_
         quantity: parseInt(item.quantity),
         price: menu.price
       });
-      
       total += menu.price * parseInt(item.quantity);
     }
 
-    // Get delivery charge from menu
-    const deliveryChargeItem = await prisma.menu.findFirst({
-      where: { name: "Delivery Charge" },
+    // Get delivery charge from Ongkir table using district_id
+    const ongkir = await prisma.ongkir.findUnique({
+      where: { id: district_id },
       select: { price: true }
     });
 
-    if (!deliveryChargeItem) {
+    if (!ongkir) {
       fs.unlinkSync(req.file.path);
-      return res.status(500).json({ error: "Delivery charge not configured" });
+      return res.status(400).json({ error: 'District/ongkir not found' });
     }
 
     // Add delivery charge to total
-    total += deliveryChargeItem.price;
+    total += ongkir.price;
 
     // Create transaction with details
     const transaction = await prisma.transaksi.create({
@@ -322,9 +335,9 @@ router.post('/transactions/bukti-pembayaran', verifyToken, upload.single('bukti_
         user_id: req.user.id,
         address: `${user.address_detail}, ${user.district}, ${user.regency}, ${user.city}, ${user.province}`,
         phone_number: user.phone_number,
-        delivery_charge: deliveryChargeItem.price,
+        delivery_charge: ongkir.price,
         total: total,
-        status: "OnProcess",
+        status: 'OnProcess',
         payment_proof: req.file.filename,
         details: {
           create: itemDetails
@@ -346,7 +359,6 @@ router.post('/transactions/bukti-pembayaran', verifyToken, upload.single('bukti_
 
     res.status(201).json(transaction);
   } catch (err) {
-    // Clean up uploaded file if transaction creation fails
     if (req.file) {
       fs.unlinkSync(req.file.path);
     }
