@@ -40,10 +40,27 @@ router.get('/transactions', verifyToken, async (req, res, next) => {
   try {
     const transactions = await prisma.transaksi.findMany({
       where: { user_id: req.user.id },
-      include: { details: true },
+      include: { details: true, user: { select: { address_detail: true, province: true, city: true, regency: true, district: true } } },
       orderBy: { created_at: 'desc' }
     });
-    res.json(transactions);
+    // Fix address in response
+    const result = transactions.map(trx => {
+      const user = trx.user;
+      let districtName = '';
+      if (user && user.district && typeof user.district === 'object') {
+        districtName = user.district.district_name;
+      } else if (user && user.district) {
+        districtName = user.district;
+      }
+      return {
+        ...trx,
+        address: user
+          ? `${user.address_detail}, ${districtName}, ${user.regency}, ${user.city}, ${user.province}`
+          : trx.address,
+        user: undefined // remove user object from response for consistency
+      };
+    });
+    res.json(result);
   } catch (err) {
     next(err);
   }
@@ -72,10 +89,27 @@ router.get('/transactions/all', verifyToken, checkRoles([1, 2]), async (req, res
     }
     const transactions = await prisma.transaksi.findMany({
       where,
-      include: { details: true, user: true },
+      include: { details: true, user: { select: { address_detail: true, province: true, city: true, regency: true, district: true } } },
       orderBy: { created_at: 'desc' }
     });
-    res.json(transactions);
+    // Fix address in response
+    const result = transactions.map(trx => {
+      const user = trx.user;
+      let districtName = '';
+      if (user && user.district && typeof user.district === 'object') {
+        districtName = user.district.district_name;
+      } else if (user && user.district) {
+        districtName = user.district;
+      }
+      return {
+        ...trx,
+        address: user
+          ? `${user.address_detail}, ${districtName}, ${user.regency}, ${user.city}, ${user.province}`
+          : trx.address,
+        user: undefined
+      };
+    });
+    res.json(result);
   } catch (err) {
     next(err);
   }
@@ -96,7 +130,7 @@ router.get('/transactions/:id', verifyToken, async (req, res, next) => {
             }
           }
         },
-        user: true
+        user: { select: { address_detail: true, province: true, city: true, regency: true, district: true } }
       }
     });
 
@@ -107,7 +141,23 @@ router.get('/transactions/:id', verifyToken, async (req, res, next) => {
       return res.status(403).json({ error: 'Unauthorized' });
     }
 
-    res.json(transaction);
+    // Fix address in response
+    const user = transaction.user;
+    let districtName = '';
+    if (user && user.district && typeof user.district === 'object') {
+      districtName = user.district.district_name;
+    } else if (user && user.district) {
+      districtName = user.district;
+    }
+    const result = {
+      ...transaction,
+      address: user
+        ? `${user.address_detail}, ${districtName}, ${user.regency}, ${user.city}, ${user.province}`
+        : transaction.address,
+      user: undefined
+    };
+
+    res.json(result);
   } catch (err) {
     next(err);
   }
@@ -222,9 +272,26 @@ router.get('/my-transactions', verifyToken, async (req, res, next) => {
   try {
     const transactions = await prisma.transaksi.findMany({
       where: { user_id: req.user.id },
-      include: { details: true, user: true }
+      include: { details: true, user: { select: { address_detail: true, province: true, city: true, regency: true, district: true } } }
     });
-    res.json(transactions);
+    // Fix address in response
+    const result = transactions.map(trx => {
+      const user = trx.user;
+      let districtName = '';
+      if (user && user.district && typeof user.district === 'object') {
+        districtName = user.district.district_name;
+      } else if (user && user.district) {
+        districtName = user.district;
+      }
+      return {
+        ...trx,
+        address: user
+          ? `${user.address_detail}, ${districtName}, ${user.regency}, ${user.city}, ${user.province}`
+          : trx.address,
+        user: undefined
+      };
+    });
+    res.json(result);
   } catch (err) {
     next(err);
   }
@@ -293,6 +360,11 @@ router.post('/transactions/bukti-pembayaran', verifyToken, upload.single('bukti_
       }
     });
 
+    // Fix: Use district.district_name if district is an object
+    const districtName = user.district && typeof user.district === 'object'
+      ? user.district.district_name
+      : user.district || '';
+
     // Calculate total and validate items
     let total = 0;
     const itemDetails = [];
@@ -333,7 +405,7 @@ router.post('/transactions/bukti-pembayaran', verifyToken, upload.single('bukti_
     const transaction = await prisma.transaksi.create({
       data: {
         user_id: req.user.id,
-        address: `${user.address_detail}, ${user.district}, ${user.regency}, ${user.city}, ${user.province}`,
+        address: `${user.address_detail}, ${districtName}, ${user.regency}, ${user.city}, ${user.province}`,
         phone_number: user.phone_number,
         delivery_charge: ongkir.price,
         total: total,
@@ -374,9 +446,26 @@ router.get('/paid-transactions', verifyToken, async (req, res, next) => {
         user_id: req.user.id,
         NOT: { status: 'Pending' }
       },
-      include: { details: true }
+      include: { details: true, user: { select: { address_detail: true, province: true, city: true, regency: true, district: true } } }
     });
-    res.json(transactions);
+    // Fix address in response
+    const result = transactions.map(trx => {
+      const user = trx.user;
+      let districtName = '';
+      if (user && user.district && typeof user.district === 'object') {
+        districtName = user.district.district_name;
+      } else if (user && user.district) {
+        districtName = user.district;
+      }
+      return {
+        ...trx,
+        address: user
+          ? `${user.address_detail}, ${districtName}, ${user.regency}, ${user.city}, ${user.province}`
+          : trx.address,
+        user: undefined
+      };
+    });
+    res.json(result);
   } catch (err) {
     next(err);
   }
