@@ -40,10 +40,24 @@ router.get('/transactions', verifyToken, async (req, res, next) => {
   try {
     const transactions = await prisma.transaksi.findMany({
       where: { user_id: req.user.id },
-      include: { details: true, user: { select: { address_detail: true, province: true, city: true, regency: true, district: true } } },
+      include: { 
+        details: true, 
+        user: { 
+          select: { 
+            first_name: true,
+            last_name: true,
+            email: true,
+            address_detail: true, 
+            province: true, 
+            city: true, 
+            regency: true, 
+            district: true 
+          } 
+        } 
+      },
       orderBy: { created_at: 'desc' }
     });
-    // Fix address in response
+    // Fix address in response and include user info
     const result = transactions.map(trx => {
       const user = trx.user;
       let districtName = '';
@@ -57,6 +71,9 @@ router.get('/transactions', verifyToken, async (req, res, next) => {
         address: user
           ? `${user.address_detail}, ${districtName}, ${user.regency}, ${user.city}, ${user.province}`
           : trx.address,
+        first_name: user ? user.first_name : undefined,
+        last_name: user ? user.last_name : undefined,
+        email: user ? user.email : undefined,
         user: undefined // remove user object from response for consistency
       };
     });
@@ -89,10 +106,24 @@ router.get('/transactions/all', verifyToken, checkRoles([1, 2]), async (req, res
     }
     const transactions = await prisma.transaksi.findMany({
       where,
-      include: { details: true, user: { select: { address_detail: true, province: true, city: true, regency: true, district: true } } },
+      include: { 
+        details: true, 
+        user: { 
+          select: { 
+            first_name: true,
+            last_name: true,
+            email: true,
+            address_detail: true, 
+            province: true, 
+            city: true, 
+            regency: true, 
+            district: true 
+          } 
+        } 
+      },
       orderBy: { created_at: 'desc' }
     });
-    // Fix address in response
+    // Fix address in response and include user info
     const result = transactions.map(trx => {
       const user = trx.user;
       let districtName = '';
@@ -106,6 +137,9 @@ router.get('/transactions/all', verifyToken, checkRoles([1, 2]), async (req, res
         address: user
           ? `${user.address_detail}, ${districtName}, ${user.regency}, ${user.city}, ${user.province}`
           : trx.address,
+        first_name: user ? user.first_name : undefined,
+        last_name: user ? user.last_name : undefined,
+        email: user ? user.email : undefined,
         user: undefined
       };
     });
@@ -130,7 +164,18 @@ router.get('/transactions/:id', verifyToken, async (req, res, next) => {
             }
           }
         },
-        user: { select: { address_detail: true, province: true, city: true, regency: true, district: true } }
+        user: { 
+          select: { 
+            first_name: true,
+            last_name: true,
+            email: true,
+            address_detail: true, 
+            province: true, 
+            city: true, 
+            regency: true, 
+            district: true 
+          } 
+        }
       }
     });
 
@@ -141,7 +186,7 @@ router.get('/transactions/:id', verifyToken, async (req, res, next) => {
       return res.status(403).json({ error: 'Unauthorized' });
     }
 
-    // Fix address in response
+    // Fix address in response and include user info
     const user = transaction.user;
     let districtName = '';
     if (user && user.district && typeof user.district === 'object') {
@@ -154,6 +199,9 @@ router.get('/transactions/:id', verifyToken, async (req, res, next) => {
       address: user
         ? `${user.address_detail}, ${districtName}, ${user.regency}, ${user.city}, ${user.province}`
         : transaction.address,
+      first_name: user ? user.first_name : undefined,
+      last_name: user ? user.last_name : undefined,
+      email: user ? user.email : undefined,
       user: undefined
     };
 
@@ -272,9 +320,23 @@ router.get('/my-transactions', verifyToken, async (req, res, next) => {
   try {
     const transactions = await prisma.transaksi.findMany({
       where: { user_id: req.user.id },
-      include: { details: true, user: { select: { address_detail: true, province: true, city: true, regency: true, district: true } } }
+      include: { 
+        details: true, 
+        user: { 
+          select: { 
+            first_name: true,
+            last_name: true,
+            email: true,
+            address_detail: true, 
+            province: true, 
+            city: true, 
+            regency: true, 
+            district: true 
+          } 
+        } 
+      }
     });
-    // Fix address in response
+    // Fix address in response and include user info
     const result = transactions.map(trx => {
       const user = trx.user;
       let districtName = '';
@@ -288,6 +350,9 @@ router.get('/my-transactions', verifyToken, async (req, res, next) => {
         address: user
           ? `${user.address_detail}, ${districtName}, ${user.regency}, ${user.city}, ${user.province}`
           : trx.address,
+        first_name: user ? user.first_name : undefined,
+        last_name: user ? user.last_name : undefined,
+        email: user ? user.email : undefined,
         user: undefined
       };
     });
@@ -446,9 +511,23 @@ router.get('/paid-transactions', verifyToken, async (req, res, next) => {
         user_id: req.user.id,
         NOT: { status: 'Pending' }
       },
-      include: { details: true, user: { select: { address_detail: true, province: true, city: true, regency: true, district: true } } }
+      include: { 
+        details: true, 
+        user: { 
+          select: { 
+            first_name: true,
+            last_name: true,
+            email: true,
+            address_detail: true, 
+            province: true, 
+            city: true, 
+            regency: true, 
+            district: true 
+          } 
+        } 
+      }
     });
-    // Fix address in response
+    // Fix address in response and include user info
     const result = transactions.map(trx => {
       const user = trx.user;
       let districtName = '';
@@ -462,6 +541,9 @@ router.get('/paid-transactions', verifyToken, async (req, res, next) => {
         address: user
           ? `${user.address_detail}, ${districtName}, ${user.regency}, ${user.city}, ${user.province}`
           : trx.address,
+        first_name: user ? user.first_name : undefined,
+        last_name: user ? user.last_name : undefined,
+        email: user ? user.email : undefined,
         user: undefined
       };
     });

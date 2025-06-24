@@ -80,7 +80,7 @@ model Transaksi {
   total           Float
   status          String             @default("pending")
   created_at      DateTime           @default(now())
-  user            User               @relation(fields: [user_id], references: [id])
+  user            User               @relation(fields: [user_id], references: [id], onDelete: Cascade)
   payment_proof   String
   details         Transaksi_Detail[]
 }
