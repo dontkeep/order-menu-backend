@@ -303,7 +303,7 @@ router.put('/transactions/auto-complete', verifyToken, checkRole(1), async (req,
     const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
     const toUpdate = await prisma.transaksi.findMany({
       where: {
-        delivery_status: 'On Process',
+        status: 'Accepted',
         created_at: { lte: twoDaysAgo },
       },
     });
@@ -311,7 +311,7 @@ router.put('/transactions/auto-complete', verifyToken, checkRole(1), async (req,
     for (const trx of toUpdate) {
       const result = await prisma.transaksi.update({
         where: { id: trx.id },
-        data: { delivery_status: 'Selesai', status: 'completed' },
+        data: { status: 'completed-by-admin' },
       });
       updated.push(result);
     }
