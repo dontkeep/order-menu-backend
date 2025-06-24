@@ -298,7 +298,7 @@ router.get('/my-transactions', verifyToken, async (req, res, next) => {
 });
 
 // Admin endpoint to auto-complete transactions stuck in 'On Process' for 2+ days
-router.put('/transactions/auto-complete', verifyToken, checkRole(1), async (req, res, next) => {
+router.put('/transactions/auto-complete', verifyToken, checkRoles([1,2]), async (req, res, next) => {
   try {
     const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
     const toUpdate = await prisma.transaksi.findMany({
