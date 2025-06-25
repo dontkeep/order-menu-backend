@@ -29,7 +29,7 @@ CREATE TABLE `Role` (
 -- InsertData Role
 INSERT INTO Role (name) VALUES
 ('admin'),
-('kasir'),
+('pegawai'),
 ('pelanggan');
 
 -- CreateTable
