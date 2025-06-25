@@ -57,7 +57,7 @@ model Cart {
   user_id  Int
   menu_id  Int
   quantity Int
-  user     User @relation(fields: [user_id], references: [id])
+  user     User @relation(fields: [user_id], references: [id], onDelete: Cascade)
   menu     Menu @relation(fields: [menu_id], references: [id])
 
   @@unique([user_id, menu_id])
@@ -68,7 +68,7 @@ model Session {
   user_id    Int
   created_at DateTime @default(now())
   expires_at DateTime
-  user       User     @relation(fields: [user_id], references: [id])
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
 model Transaksi {
@@ -91,7 +91,7 @@ model Transaksi_Detail {
   menu_id      Int
   quantity     Int
   price        Float
-  transaksi    Transaksi @relation(fields: [transaksi_id], references: [id])
+  transaksi    Transaksi @relation(fields: [transaksi_id], references: [id], onDelete: Cascade)
   menu         Menu      @relation(fields: [menu_id], references: [id])
 }
 
