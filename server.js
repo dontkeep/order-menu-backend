@@ -166,21 +166,6 @@ const createInitialAccounts = async () => {
     } else {
       console.log('User already exists.');
     }
-
-    // ======= Delivery Category Creation =======
-    const existingDeliveryCategory = await prisma.kategori.findFirst({
-      where: { name: 'Delivery' }
-    });
-
-    if (!existingDeliveryCategory) {
-      await prisma.kategori.create({
-        data: { name: 'Delivery' }
-      });
-      console.log('✅ Delivery category created.');
-    } else {
-      console.log('Delivery category already exists.');
-    }
-
   } catch (err) {
     console.error('❌ Error creating initial data:', err);
   }
