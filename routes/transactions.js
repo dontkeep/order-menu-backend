@@ -633,4 +633,24 @@ router.put('/transactions/:id/user-reject', verifyToken, async (req, res, next) 
   }
 });
 
+// Soft delete a transaction (set state to Inactive)
+router.delete('/transactions/:id', verifyToken, async (req, res, next) => {
+  const { id } = req.params;
+  try {
+    // Only allow if admin or the transaction belongs to the user
+    const trx = await prisma.transaksi.findUnique({ where: { id: parseInt(id) } });
+    if (!trx) return res.status(404).json({ error: 'Transaction not found' });
+    if (req.user.role_id !== 1 && req.user.role_id !== 2 && trx.user_id !== req.user.id) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+    await prisma.transaksi.update({
+      where: { id: parseInt(id) },
+      data: { state: "Inactive" }
+    });
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;

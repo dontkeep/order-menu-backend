@@ -113,9 +113,9 @@ router.post('/menus', verifyToken, checkRole(1), upload.single('image'), async (
 });
 
 // Route to edit a menu (Admin only)
-router.put('/menus/:id', verifyToken, checkRole(1), upload.single('image'), async (req, res, next) => { // Use role_id 1 for admin
+router.put('/menus/:id', verifyToken, checkRole(1), upload.single('image'), async (req, res, next) => {
   const { id } = req.params;
-  const { name, price, category_id, description, stock } = req.body;
+  const { name, price, category_id, description, stock, state } = req.body; // add state
 
   try {
     // Prepare update data
@@ -131,6 +131,10 @@ router.put('/menus/:id', verifyToken, checkRole(1), upload.single('image'), asyn
     // If a new image is uploaded, update the image field
     if (req.file) {
       updateData.image = req.file.filename;
+    }
+    // Allow admin to update state
+    if (state) {
+      updateData.state = state;
     }
     const updatedMenu = await prisma.menu.update({
       where: { id: parseInt(id) },
@@ -162,13 +166,13 @@ router.put('/menus/:id/stock', verifyToken, checkRole(1), async (req, res, next)
   }
 });
 
-// Route to delete a menu (Admin only)
-router.delete('/menus/:id', verifyToken, checkRole(1), async (req, res, next) => { // Use role_id 1 for admin
+// Route to "deactivate" a menu (Admin only, soft delete)
+router.delete('/menus/:id', verifyToken, checkRole(1), async (req, res, next) => {
   const { id } = req.params;
-
   try {
-    await prisma.menu.delete({
-      where: { id: parseInt(id) }
+    await prisma.menu.update({
+      where: { id: parseInt(id) },
+      data: { state: "Inactive" }
     });
     res.status(204).send();
   } catch (err) {
@@ -201,14 +205,18 @@ router.post('/categories', verifyToken, checkRole(1), async (req, res, next) => 
 });
 
 // Route to edit a category (Admin only)
-router.put('/categories/:id', verifyToken, checkRole(1), async (req, res, next) => { // Use role_id 1 for admin
+router.put('/categories/:id', verifyToken, checkRole(1), async (req, res, next) => {
   const { id } = req.params;
-  const { name } = req.body;
+  const { name, state } = req.body; // add state
 
   try {
+    const updateData = { name };
+    if (state) {
+      updateData.state = state;
+    }
     const updatedCategory = await prisma.kategori.update({
       where: { id: parseInt(id) },
-      data: { name }
+      data: updateData
     });
     res.json(updatedCategory);
   } catch (err) {
@@ -216,13 +224,13 @@ router.put('/categories/:id', verifyToken, checkRole(1), async (req, res, next) 
   }
 });
 
-// Route to delete a category (Admin only)
-router.delete('/categories/:id', verifyToken, checkRole(1), async (req, res, next) => { // Use role_id 1 for admin
+// Route to "deactivate" a category (Admin only, soft delete)
+router.delete('/categories/:id', verifyToken, checkRole(1), async (req, res, next) => {
   const { id } = req.params;
-
   try {
-    await prisma.kategori.delete({
-      where: { id: parseInt(id) }
+    await prisma.kategori.update({
+      where: { id: parseInt(id) },
+      data: { state: "Inactive" }
     });
     res.status(204).send();
   } catch (err) {
