@@ -43,16 +43,25 @@ router.get('/users', verifyToken, checkRole(1), async (req, res, next) => {
   }
 });
 
-// route to update a user's password
+// Update user (including state)
 router.put('/users/:id', verifyToken, checkRole(1), async (req, res, next) => {
   const { id } = req.params;
-  const { password } = req.body;
+  const { password, state } = req.body; // add state
 
   try {
-    const hashedPassword = await bcrypt.hash(password, 10); // Hash the password before saving
+    const data = {};
+    if (password) {
+      data.password = await bcrypt.hash(password, 10);
+    }
+    if (state) {
+      data.state = state;
+    }
+    if (Object.keys(data).length === 0) {
+      return res.status(400).json({ error: 'No data to update' });
+    }
     const updatedUser = await prisma.user.update({
       where: { id: parseInt(id) },
-      data: { hashedPassword } // Assuming password is hashed before this
+      data
     });
     res.json(updatedUser);
   } catch (err) {
@@ -60,12 +69,13 @@ router.put('/users/:id', verifyToken, checkRole(1), async (req, res, next) => {
   }
 });
 
-// route to delete a user
+// Route to "deactivate" a user (soft delete)
 router.delete('/users/:id', verifyToken, checkRole(1), async (req, res, next) => {
   const { id } = req.params;
   try {
-    await prisma.user.delete({
-      where: { id: parseInt(id) }
+    await prisma.user.update({
+      where: { id: parseInt(id) },
+      data: { state: "Inactive" }
     });
     res.status(204).send();
   } catch (err) {
@@ -126,13 +136,13 @@ router.put('/users/:id/role', verifyToken, checkRole(1), async (req, res, next) 
   }
 });
 
-// Route to deactivate a user
-router.delete('/users/:id', verifyToken, checkRole(1), async (req, res, next) => {
+// Route to "deactivate" a menu (soft delete)
+router.delete('/menus/:id', verifyToken, checkRole(1), async (req, res, next) => {
   const { id } = req.params;
-
   try {
-    await prisma.user.delete({
-      where: { id: parseInt(id) }
+    await prisma.menu.update({
+      where: { id: parseInt(id) },
+      data: { state: "Inactive" }
     });
     res.status(204).send();
   } catch (err) {
@@ -315,6 +325,80 @@ router.get('/get-graphic-data', verifyToken, checkRole(1), async (req, res, next
       });
 
     res.json(formattedData);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Route to "deactivate" a category (soft delete)
+router.delete('/categories/:id', verifyToken, checkRole(1), async (req, res, next) => {
+  const { id } = req.params;
+  try {
+    await prisma.kategori.update({
+      where: { id: parseInt(id) },
+      data: { state: "Inactive" }
+    });
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Route to "deactivate" a transaction (soft delete)
+router.delete('/transactions/:id', verifyToken, checkRole(1), async (req, res, next) => {
+  const { id } = req.params;
+  try {
+    await prisma.transaksi.update({
+      where: { id: parseInt(id) },
+      data: { state: "Inactive" }
+    });
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Update role (including state)
+router.put('/roles/:id', verifyToken, checkRole(1), async (req, res, next) => {
+  const { id } = req.params;
+  const { name, state } = req.body;
+  try {
+    const updateData = {};
+    if (name) updateData.name = name;
+    if (state) updateData.state = state;
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({ error: 'No data to update' });
+    }
+    const updatedRole = await prisma.role.update({
+      where: { id: parseInt(id) },
+      data: updateData
+    });
+    res.json(updatedRole);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Update menu (including state) - already handled in menu.js
+
+// Update category (including state) - already handled in menu.js
+
+// Update transaction (including state)
+router.put('/transactions/:id', verifyToken, checkRole(1), async (req, res, next) => {
+  const { id } = req.params;
+  const { status, state } = req.body;
+  try {
+    const updateData = {};
+    if (status) updateData.status = status;
+    if (state) updateData.state = state;
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({ error: 'No data to update' });
+    }
+    const updatedTransaksi = await prisma.transaksi.update({
+      where: { id: parseInt(id) },
+      data: updateData
+    });
+    res.json(updatedTransaksi);
   } catch (err) {
     next(err);
   }

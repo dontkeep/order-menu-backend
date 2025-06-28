@@ -25,18 +25,21 @@ model User {
   sessions       Session[]
   transactions   Transaksi[]
   cart           Cart[]
+  state          String      @default("active")
 }
 
 model Role {
   id    Int    @id @default(autoincrement())
   name  String @unique
   users User[]
+  state String @default("active")
 }
 
 model Kategori {
   id    Int    @id @default(autoincrement())
   name  String
   menus Menu[]
+  state String @default("active")
 }
 
 model Menu {
@@ -50,6 +53,7 @@ model Menu {
   details     Transaksi_Detail[]
   stock       Int                @default(0) // Add stock field to track inventory
   description String?
+  state       String             @default("active")
 }
 
 model Cart {
@@ -83,6 +87,7 @@ model Transaksi {
   user            User               @relation(fields: [user_id], references: [id], onDelete: Cascade)
   payment_proof   String
   details         Transaksi_Detail[]
+  state           String             @default("active")
 }
 
 model Transaksi_Detail {
