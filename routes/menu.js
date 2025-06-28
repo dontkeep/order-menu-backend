@@ -238,5 +238,39 @@ router.delete('/categories/:id', verifyToken, checkRole(1), async (req, res, nex
   }
 });
 
+router.get('/menu/active-menus', async (req, res, next) => {
+  try {
+    const activeMenus = await prisma.menu.findMany({
+      where: {
+        state: 'Active' 
+      },
+      include: {
+        category: {
+          select: {
+            name: true 
+          }
+        }
+      }
+    });
+
+    // Map the response to include category_name
+    const formattedMenus = activeMenus.map(menu => ({
+      id: menu.id,
+      name: menu.name,
+      price: menu.price,
+      image: menu.image,
+      category_id: menu.category_id,
+      category_name: menu.category?.name || null, // Add category_name
+      stock: menu.stock,
+      description: menu.description // Include description if needed
+    }));
+
+    res.json(formattedMenus);
+  } catch (err) {
+    next(err);
+  }
+});
+
+
 module.exports = router;
 
