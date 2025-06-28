@@ -38,7 +38,7 @@ router.get('/menus', async (req, res, next) => {
 });
 
 // Route to get all menus
-router.get('/menus/all', async (req, res, next) => {
+router.get('/menus/all', verifyToken, checkRole(1), async (req, res, next) => {
   console.log('GET /menus/all route hit'); // Debug log
   try {
     const menus = await prisma.menu.findMany({
