@@ -41,7 +41,15 @@ router.get('/transactions', verifyToken, async (req, res, next) => {
     const transactions = await prisma.transaksi.findMany({
       where: { user_id: req.user.id },
       include: { 
-        details: true, 
+        details: { 
+          include: { 
+            menu: { 
+              select: { 
+                name: true 
+              } 
+            } 
+          } 
+        }, 
         user: { 
           select: { 
             first_name: true,
@@ -57,6 +65,7 @@ router.get('/transactions', verifyToken, async (req, res, next) => {
       },
       orderBy: { created_at: 'desc' }
     });
+
     // Fix address in response and include user info
     const result = transactions.map(trx => {
       const user = trx.user;
@@ -74,6 +83,10 @@ router.get('/transactions', verifyToken, async (req, res, next) => {
         first_name: user ? user.first_name : undefined,
         last_name: user ? user.last_name : undefined,
         email: user ? user.email : undefined,
+        details: trx.details.map(detail => ({
+          ...detail,
+          menu_name: detail.menu.name // Tambahkan nama menu ke detail
+        })),
         user: undefined // remove user object from response for consistency
       };
     });
