@@ -140,6 +140,35 @@ router.put('/users/:id/role', verifyToken, checkRole(1), async (req, res, next) 
   }
 });
 
+// Endpoint: Get all menus (no filter, admin only)
+router.get('/all-menus', verifyToken, checkRole(1), async (req, res, next) => {
+  try {
+    const menus = await prisma.menu.findMany({
+      include: {
+        category: {
+          select: { name: true }
+        }
+      }
+    });
+
+    const formattedMenus = menus.map(menu => ({
+      id: menu.id,
+      name: menu.name,
+      price: menu.price,
+      image: menu.image,
+      category_id: menu.category_id,
+      category_name: menu.category?.name || null,
+      stock: menu.stock,
+      description: menu.description,
+      state: menu.state
+    }));
+
+    res.json(formattedMenus);
+  } catch (err) {
+    next(err);
+  }
+});
+
 // Route to "deactivate" a menu (soft delete)
 router.delete('/menus/:id', verifyToken, checkRole(1), async (req, res, next) => {
   const { id } = req.params;
