@@ -89,10 +89,15 @@ router.get("/statistik", verifyToken, checkRole(1), async (req, res, next) => {
     const stockKosong = await prisma.menu.count({
       where: {
         stock: 0,
+        state: "active"
       },
     });
 
-    const totalProduk = await prisma.menu.count();
+    const totalProduk = await prisma.menu.count({
+      where: {
+        state: "active"
+      }
+    });
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -118,7 +123,6 @@ router.get("/statistik", verifyToken, checkRole(1), async (req, res, next) => {
     next(err);
   }
 });
-
 
 // Route to update a user's role
 router.put('/users/:id/role', verifyToken, checkRole(1), async (req, res, next) => {
