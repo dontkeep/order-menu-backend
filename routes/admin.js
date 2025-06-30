@@ -191,6 +191,9 @@ router.get('/transactions', verifyToken, checkRole(1), async (req, res, next) =>
 router.get("/stock-statistics", verifyToken, checkRole(1), async (req, res, next) => {
   try {
     const stockStatistics = await prisma.menu.findMany({
+      where: {
+        state: "active"
+      },
       select: {
         id: true,
         name: true,
