@@ -50,6 +50,11 @@ const login = async (req, res, next) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).send('Invalid email or password');
 
+    // Check if account is active
+    if (user.state === 'Inactive') {
+      return res.status(403).send('Account is blocked. Please contact administrator.');
+    }
+
     // Create session
     const sessionId = crypto.randomBytes(16).toString('hex');
     const expiresAt = new Date(Date.now() + 3600000); // 1 hour from now
