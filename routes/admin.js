@@ -34,7 +34,8 @@ router.get('/users', verifyToken, checkRole(1), async (req, res, next) => {
         first_name: true,
         last_name: true, 
         email: true,
-        role: true
+        role: true,
+        state: true
       }
     });
     res.json(users);
