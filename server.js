@@ -26,6 +26,8 @@ const allowedOrigins = [
   'http://localhost:5173',
   'http://192.168.1.7:5173',
   'https://rmsarinikmat.naufalad.com',
+  'https://www.rmsarinikmat.web.id',
+  'https://rmsarinikmat.web.id',
   // Add other origins as needed
   "*"
 ];
