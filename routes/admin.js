@@ -34,7 +34,8 @@ router.get('/users', verifyToken, checkRole(1), async (req, res, next) => {
         first_name: true,
         last_name: true, 
         email: true,
-        role: true
+        role: true,
+        state: true
       }
     });
     res.json(users);
@@ -89,10 +90,15 @@ router.get("/statistik", verifyToken, checkRole(1), async (req, res, next) => {
     const stockKosong = await prisma.menu.count({
       where: {
         stock: 0,
+        state: "active"
       },
     });
 
-    const totalProduk = await prisma.menu.count();
+    const totalProduk = await prisma.menu.count({
+      where: {
+        state: "active"
+      }
+    });
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -119,7 +125,6 @@ router.get("/statistik", verifyToken, checkRole(1), async (req, res, next) => {
   }
 });
 
-
 // Route to update a user's role
 router.put('/users/:id/role', verifyToken, checkRole(1), async (req, res, next) => {
   const { id } = req.params;
@@ -131,6 +136,35 @@ router.put('/users/:id/role', verifyToken, checkRole(1), async (req, res, next) 
       data: { role_id }
     });
     res.json(updatedUser);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Endpoint: Get all menus (no filter, admin only)
+router.get('/all-menus', verifyToken, checkRole(1), async (req, res, next) => {
+  try {
+    const menus = await prisma.menu.findMany({
+      include: {
+        category: {
+          select: { name: true }
+        }
+      }
+    });
+
+    const formattedMenus = menus.map(menu => ({
+      id: menu.id,
+      name: menu.name,
+      price: menu.price,
+      image: menu.image,
+      category_id: menu.category_id,
+      category_name: menu.category?.name || null,
+      stock: menu.stock,
+      description: menu.description,
+      state: menu.state
+    }));
+
+    res.json(formattedMenus);
   } catch (err) {
     next(err);
   }
@@ -187,6 +221,9 @@ router.get('/transactions', verifyToken, checkRole(1), async (req, res, next) =>
 router.get("/stock-statistics", verifyToken, checkRole(1), async (req, res, next) => {
   try {
     const stockStatistics = await prisma.menu.findMany({
+      where: {
+        state: "active"
+      },
       select: {
         id: true,
         name: true,
