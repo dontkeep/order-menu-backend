@@ -35,7 +35,20 @@ router.get('/users', verifyToken, checkRole(1), async (req, res, next) => {
         last_name: true, 
         email: true,
         role: true,
-        state: true
+        state: true,
+        phone_number: true,
+        address_detail: true,
+        province: true,
+        city: true,
+        regency: true,
+        district: {
+          select: {
+            id: true,
+            district_name: true,
+            district_post_kode: true,
+            price: true
+          }
+        },
       }
     });
     res.json(users);
